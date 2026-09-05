@@ -1,0 +1,10 @@
+{
+  "name": "PARAMIS FOUNDATION",
+  "description": "Portal resmi Yayasan Prakarsa Hadji Abdul Muis (PARAMIS FOUNDATION): platform donasi terintegrasi, laporan kegiatan sosial transparan, manajemen relawan otomatis, dan dashboard admin real-time.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
