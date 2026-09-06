@@ -46,14 +46,13 @@ export const ParamisLogo: React.FC<ParamisLogoProps> = ({
   }
 
   // Dimension scaling map:
-  // Jarak antar huruf tetap dekat (natural kerning)
-  // Spasi antar baris diberi jarak optis yang bersih (gap)
-  // F sejajar dengan P di kiri, N sejajar dengan S di kanan
+  // - FOUNDATION dibuat lebih proporsional, ramping, dan pas dengan kedua sisi kata PARAMIS (F lurus P, N lurus S)
+  // - Spasi vertikal antara PARAMIS dan FOUNDATION didekatkan secara optis agar harmonis namun tidak dempet
   const scaleMap = {
     xs: {
       textParamis: 'text-[12px] sm:text-[13px]',
-      textFound: 'text-[5.8px] sm:text-[6.2px]',
-      gap: 'mt-1',
+      textFound: 'text-[4.2px] sm:text-[4.6px]',
+      gap: 'mt-[1.5px]',
       torchTop: '-top-[28%]',
       torchRight: '-right-[12%]',
       torchWidth: 'w-[54%]',
@@ -61,8 +60,8 @@ export const ParamisLogo: React.FC<ParamisLogoProps> = ({
     },
     sm: {
       textParamis: 'text-[15px] sm:text-[16px]',
-      textFound: 'text-[7.2px] sm:text-[7.8px]',
-      gap: 'mt-1.25',
+      textFound: 'text-[5.2px] sm:text-[5.6px]',
+      gap: 'mt-[2px]',
       torchTop: '-top-[30%]',
       torchRight: '-right-[12%]',
       torchWidth: 'w-[55%]',
@@ -70,8 +69,8 @@ export const ParamisLogo: React.FC<ParamisLogoProps> = ({
     },
     md: {
       textParamis: 'text-[19px] sm:text-[21px]',
-      textFound: 'text-[9.2px] sm:text-[10px]',
-      gap: 'mt-1.5',
+      textFound: 'text-[6.5px] sm:text-[7.2px]',
+      gap: 'mt-[2.5px] sm:mt-[3px]',
       torchTop: '-top-[32%]',
       torchRight: '-right-[14%]',
       torchWidth: 'w-[56%]',
@@ -79,8 +78,8 @@ export const ParamisLogo: React.FC<ParamisLogoProps> = ({
     },
     lg: {
       textParamis: 'text-[25px] sm:text-[27px]',
-      textFound: 'text-[12px] sm:text-[13px]',
-      gap: 'mt-2',
+      textFound: 'text-[8.5px] sm:text-[9.4px]',
+      gap: 'mt-[3.5px] sm:mt-[4px]',
       torchTop: '-top-[34%]',
       torchRight: '-right-[15%]',
       torchWidth: 'w-[58%]',
@@ -88,8 +87,8 @@ export const ParamisLogo: React.FC<ParamisLogoProps> = ({
     },
     xl: {
       textParamis: 'text-[32px] sm:text-[35px]',
-      textFound: 'text-[15px] sm:text-[16.8px]',
-      gap: 'mt-2.5',
+      textFound: 'text-[11px] sm:text-[12.2px]',
+      gap: 'mt-[4.5px] sm:mt-[5px]',
       torchTop: '-top-[35%]',
       torchRight: '-right-[16%]',
       torchWidth: 'w-[60%]',
@@ -171,11 +170,11 @@ export const ParamisLogo: React.FC<ParamisLogoProps> = ({
         </div>
 
         {/* 2. ROW 2: FOUNDATION Undertext
-               - Spasi antar baris jelas (${currentScale.gap}), tidak dempet/tumpang tindih
-               - Jarak antar huruf tetap dekat dan rapi
-               - Huruf F sejajar tepat di bawah P, dan huruf N sejajar tepat di bawah S */}
+               - Spasi antar baris didekatkan secara proporsional (${currentScale.gap}), tidak dempet/menempel
+               - Ukuran huruf lebih ramping (${currentScale.textFound}) agar seimbang
+               - Presisi rata sisi: huruf F pas di bawah P, dan huruf N pas di bawah S */}
         <div 
-          className={`flex items-center justify-between w-full leading-none ${currentScale.gap} ${foundationColor} transition-colors select-none`}
+          className={`flex items-center justify-between w-full leading-none px-[0.5px] ${currentScale.gap} ${foundationColor} transition-colors select-none`}
           style={{ 
             fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif"
           }}
@@ -184,7 +183,7 @@ export const ParamisLogo: React.FC<ParamisLogoProps> = ({
           {foundationLetters.map((char, index) => (
             <span 
               key={index} 
-              className={`font-black uppercase leading-none select-none ${currentScale.textFound}`}
+              className={`font-extrabold uppercase leading-none select-none ${currentScale.textFound}`}
             >
               {char}
             </span>

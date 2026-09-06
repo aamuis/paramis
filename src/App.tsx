@@ -12,7 +12,8 @@ import {
 import { 
   DonationCampaign, 
   CampaignCategory, 
-  DonationTransaction 
+  DonationTransaction,
+  CustomMenuItem
 } from './types';
 import { SplashScreen } from './components/SplashScreen';
 import { Header } from './components/Header';
@@ -31,6 +32,7 @@ import { QuickCategoryGrid } from './components/QuickCategoryGrid';
 import { ZakatCalculatorModal } from './components/ZakatCalculatorModal';
 import { AmbulanceServiceModal } from './components/AmbulanceServiceModal';
 import { FundraiserForm } from './components/FundraiserForm';
+import { LegalTermsView } from './components/LegalTermsView';
 import { 
   Heart, 
   ShieldCheck, 
@@ -45,7 +47,9 @@ import {
   Truck,
   Calculator,
   Globe,
-  MessageCircle
+  MessageCircle,
+  FileText,
+  BookOpen
 } from 'lucide-react';
 import { ParamisLogo } from './components/ParamisLogo';
 
@@ -104,6 +108,21 @@ export function App() {
     window.addEventListener('hashchange', checkHash);
     return () => window.removeEventListener('hashchange', checkHash);
   }, []);
+
+  // Secret keyboard shortcut for owner: Ctrl+Shift+A or Alt+A
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) ||
+        (e.altKey && (e.key === 'A' || e.key === 'a'))
+      ) {
+        e.preventDefault();
+        handleOpenSecretAdmin();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isAdminAuthenticated]);
 
   // Secret logo tap handler (5 quick taps opens admin unlock dialog)
   const handleLogoTap = () => {
@@ -201,7 +220,93 @@ export function App() {
       case 'Shield': return <ShieldCheck className="w-4 h-4 text-emerald-500" />;
       case 'Globe': return <Globe className="w-4 h-4 text-sky-500" />;
       case 'MessageCircle': return <MessageCircle className="w-4 h-4 text-emerald-500" />;
+      case 'FileText': return <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />;
+      case 'BookOpen': return <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />;
       default: return <Sparkles className="w-4 h-4 text-amber-500" />;
+    }
+  };
+
+  const handleCustomMenuItemClick = (menu: CustomMenuItem) => {
+    if (menu.isExternal && menu.externalUrl) {
+      window.open(menu.externalUrl, '_blank');
+      return;
+    }
+
+    const titleLower = (menu.title || '').toLowerCase();
+    const pathLower = (menu.pathOrTab || '').toLowerCase();
+
+    // 1. Kalkulator Zakat - Explicit Fix for user request
+    if (
+      menu.id === 'menu-zakat' ||
+      pathLower === 'zakat' ||
+      pathLower === 'calculator' ||
+      titleLower.includes('zakat') ||
+      titleLower.includes('kalkulator') ||
+      menu.iconName === 'Calculator'
+    ) {
+      setIsZakatCalculatorOpen(true);
+      return;
+    }
+
+    // 2. Layanan Ambulans 24 Jam
+    if (
+      menu.id === 'menu-ambulance' ||
+      pathLower === 'ambulance' ||
+      pathLower === 'ambulans' ||
+      titleLower.includes('ambulan') ||
+      menu.iconName === 'Truck'
+    ) {
+      setIsAmbulanceModalOpen(true);
+      return;
+    }
+
+    // 3. Syarat & Ketentuan / Kebijakan Privasi
+    if (
+      menu.id === 'menu-terms' ||
+      pathLower === 'terms' ||
+      pathLower === 'legal' ||
+      pathLower === 'kebijakan' ||
+      titleLower.includes('syarat') ||
+      titleLower.includes('ketentuan') ||
+      titleLower.includes('kebijakan') ||
+      titleLower.includes('privasi')
+    ) {
+      setActiveTab('terms');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // 4. Galang Dana
+    if (pathLower === 'galang_dana' || pathLower === 'fundraiser' || titleLower.includes('galang')) {
+      setActiveTab('galang_dana');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // 5. Transparansi & Laporan
+    if (pathLower === 'transparency' || titleLower.includes('transparan') || titleLower.includes('laporan')) {
+      setIsTransparencyModalOpen(true);
+      return;
+    }
+
+    // 6. Relawan
+    if (pathLower === 'volunteers' || titleLower.includes('relawan')) {
+      setActiveTab('volunteers');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // 7. Donasi / Program
+    if (pathLower === 'donations' || titleLower.includes('donasi')) {
+      setActiveTab('donations');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    // Fallback Tab Routing
+    if (['home', 'donations', 'galang_dana', 'volunteers', 'transparency', 'terms'].includes(pathLower)) {
+      setActiveTab(pathLower as TabType);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -341,20 +446,7 @@ export function App() {
                     {cmsConfig.customMenuItems.filter(m => m.isActive).map((menu) => (
                       <button
                         key={menu.id}
-                        onClick={() => {
-                          if (menu.isExternal && menu.externalUrl) {
-                            window.open(menu.externalUrl, '_blank');
-                          } else if (menu.pathOrTab === 'donations') {
-                            setActiveTab('donations');
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          } else if (menu.pathOrTab === 'volunteers') {
-                            setActiveTab('volunteers');
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          } else if (menu.pathOrTab === 'transparency') {
-                            setActiveTab('transparency');
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }
-                        }}
+                        onClick={() => handleCustomMenuItemClick(menu)}
                         className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-2.5 hover:border-[#060ee3] dark:hover:border-blue-500 transition-all text-left cursor-pointer active:scale-98"
                       >
                         <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center shrink-0">
@@ -620,6 +712,10 @@ export function App() {
                   setActiveTab('donations');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
+                onOpenTerms={() => {
+                  setActiveTab('terms');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
               />
             </div>
           )}
@@ -659,6 +755,17 @@ export function App() {
               </div>
             )
           )}
+
+          {/* TAB: TERMS & CONDITIONS / KEBIJAKAN PRIVASI (PUSAT LEGALITAS DROP DOWN) */}
+          {activeTab === 'terms' && (
+            <LegalTermsView
+              cmsConfig={cmsConfig}
+              onBackToHome={() => {
+                setActiveTab('home');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          )}
         </main>
 
         {/* Footer */}
@@ -669,6 +776,10 @@ export function App() {
           onOpenVolunteer={() => setIsVolunteerModalOpen(true)}
           onOpenDonations={() => setActiveTab('donations')}
           onOpenNotifications={() => setIsEmailModalOpen(true)}
+          onOpenTerms={() => {
+            setActiveTab('terms');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
         />
 
         {/* Bottom Navigation */}

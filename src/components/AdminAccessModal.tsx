@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Lock, Eye, EyeOff, X, KeyRound, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { ParamisLogo } from './ParamisLogo';
 
 interface AdminAccessModalProps {
@@ -20,7 +20,7 @@ export const AdminAccessModal: React.FC<AdminAccessModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Accepted PINs: 1945 (Tahun Kemerdekaan), 5674 (4 digit akhir kontak yayasan), paramis, admin123
+  // Accepted PINs: 1945, 5674, paramis, admin, admin123, 085195555674
   const validPins = ['1945', '5674', 'paramis', 'admin', 'admin123', '085195555674'];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -88,7 +88,7 @@ export const AdminAccessModal: React.FC<AdminAccessModalProps> = ({
         </div>
 
         <p className="text-xs text-slate-600 dark:text-slate-300 text-center leading-relaxed">
-          Halaman admin disembunyikan dari publik. Masukkan kode PIN pengelola Anda untuk membuka dashboard.
+          Akses khusus pengelola yayasan. Masukkan kode PIN atau kata sandi Anda untuk melanjutkan.
         </p>
 
         {/* Login Form */}
@@ -105,7 +105,7 @@ export const AdminAccessModal: React.FC<AdminAccessModalProps> = ({
                   setPin(e.target.value);
                   if (error) setError('');
                 }}
-                placeholder="Masukkan PIN (cth: 1945 atau 5674)"
+                placeholder="Masukkan PIN / kata sandi"
                 autoFocus
                 className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-[#060ee3]"
               />
@@ -126,16 +126,6 @@ export const AdminAccessModal: React.FC<AdminAccessModalProps> = ({
             </div>
           )}
 
-          <div className="p-2.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 text-[11px] text-slate-600 dark:text-slate-300 space-y-0.5">
-            <div className="flex items-center gap-1 font-semibold text-[#060ee3] dark:text-blue-300 text-[10px] uppercase">
-              <KeyRound className="w-3 h-3" />
-              <span>Petunjuk Akses Cepat</span>
-            </div>
-            <p className="text-[10.5px]">
-              Gunakan PIN default <strong className="font-mono text-[#060ee3] dark:text-blue-300">1945</strong> atau 4 digit akhir kontak yayasan <strong className="font-mono text-[#060ee3] dark:text-blue-300">5674</strong>.
-            </p>
-          </div>
-
           <div className="grid grid-cols-2 gap-2 pt-1">
             <button
               type="button"
@@ -150,7 +140,7 @@ export const AdminAccessModal: React.FC<AdminAccessModalProps> = ({
               className="py-2.5 px-3 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white text-xs font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 disabled:opacity-50"
             >
               <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>{isLoading ? 'Memverifikasi...' : 'Buka Admin'}</span>
+              <span>{isLoading ? 'Memverifikasi...' : 'Masuk Dashboard'}</span>
             </button>
           </div>
         </form>

@@ -40,8 +40,8 @@ export const INITIAL_CMS_CONFIG: CmsConfig = {
   customMenuItems: [
     {
       id: "menu-ambulance",
-      title: "Layanan Ambulans",
-      pathOrTab: "volunteers",
+      title: "Ambulans Gratis 24 Jam",
+      pathOrTab: "ambulance",
       iconName: "Truck",
       isExternal: false,
       isActive: true
@@ -49,8 +49,16 @@ export const INITIAL_CMS_CONFIG: CmsConfig = {
     {
       id: "menu-zakat",
       title: "Kalkulator Zakat",
-      pathOrTab: "donations",
+      pathOrTab: "zakat",
       iconName: "Calculator",
+      isExternal: false,
+      isActive: true
+    },
+    {
+      id: "menu-terms",
+      title: "Syarat & Ketentuan",
+      pathOrTab: "terms",
+      iconName: "FileText",
       isExternal: false,
       isActive: true
     }

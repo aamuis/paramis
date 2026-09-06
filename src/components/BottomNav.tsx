@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { CmsConfig, DonationCampaign } from '../types';
 
-export type TabType = 'home' | 'donations' | 'galang_dana' | 'volunteers' | 'transparency';
+export type TabType = 'home' | 'donations' | 'galang_dana' | 'volunteers' | 'transparency' | 'terms';
 
 interface BottomNavProps {
   activeTab: TabType | 'admin';

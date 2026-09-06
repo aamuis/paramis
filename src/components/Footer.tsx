@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { ParamisLogo } from './ParamisLogo';
 import { CmsConfig } from '../types';
 import { 
@@ -11,7 +11,7 @@ import {
   Globe,
   Bell,
   CheckCircle2,
-  Lock
+  BookOpen
 } from 'lucide-react';
 
 interface FooterProps {
@@ -21,6 +21,7 @@ interface FooterProps {
   onOpenVolunteer: () => void;
   onOpenDonations: () => void;
   onOpenNotifications?: () => void;
+  onOpenTerms?: () => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -29,8 +30,25 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenTransparency,
   onOpenVolunteer,
   onOpenDonations,
-  onOpenNotifications
+  onOpenNotifications,
+  onOpenTerms
 }) => {
+  const clickCountRef = useRef(0);
+  const clickTimerRef = useRef<any>(null);
+
+  // Discreet secret access: 3 taps on copyright text (no lock icon shown)
+  const handleSecretAccess = () => {
+    clickCountRef.current += 1;
+    if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+    if (clickCountRef.current >= 3) {
+      clickCountRef.current = 0;
+      onOpenAdmin();
+      return;
+    }
+    clickTimerRef.current = setTimeout(() => {
+      clickCountRef.current = 0;
+    }, 1500);
+  };
   return (
     <footer 
       id="app-footer" 
@@ -111,20 +129,13 @@ export const Footer: React.FC<FooterProps> = ({
             <span>Daftar Relawan</span>
           </button>
 
-          {onOpenNotifications ? (
-            <button
-              onClick={onOpenNotifications}
-              className="flex items-center gap-2 p-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-left text-white font-medium cursor-pointer transition-colors"
-            >
-              <Bell className="w-4 h-4 text-cyan-300 shrink-0" />
-              <span>Notifikasi Program</span>
-            </button>
-          ) : (
-            <div className="flex items-center gap-2 p-2.5 rounded-xl bg-white/5 text-left text-white/80 font-medium">
-              <ShieldCheck className="w-4 h-4 text-blue-200 shrink-0" />
-              <span>Amanah & Legal</span>
-            </div>
-          )}
+          <button
+            onClick={onOpenTerms}
+            className="flex items-center gap-2 p-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-left text-white font-medium cursor-pointer transition-colors"
+          >
+            <BookOpen className="w-4 h-4 text-blue-200 shrink-0" />
+            <span>Syarat & Ketentuan</span>
+          </button>
         </div>
 
         {/* Contact Info: Centered, Phone removed, WhatsApp only */}
@@ -173,18 +184,35 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Bottom copyright notice with discreet secret access */}
         <div className="text-center text-[11px] text-white/70 pt-3 border-t border-white/10 flex flex-col items-center">
           <p>© {new Date().getFullYear()} PARAMIS FOUNDATION.</p>
-          <div className="text-[10px] text-white/60 flex items-center justify-center gap-1.5 mt-0.5">
-            <span>Yayasan Prakarsa Hadji Abdul Muis. All rights reserved.</span>
-            {/* Subtle, discreet lock icon for owner's secret access */}
-            <button 
-              type="button"
-              onClick={onOpenAdmin} 
-              className="opacity-25 hover:opacity-100 transition-opacity p-0.5 text-white cursor-pointer focus:outline-none"
-              title="Akses Pengelola"
-              aria-label="Akses Pengelola"
+          <div className="flex items-center justify-center gap-2 text-[10px] text-blue-200 mt-1 flex-wrap">
+            <button
+              onClick={onOpenTerms}
+              className="hover:text-white underline cursor-pointer"
             >
-              <Lock className="w-2.5 h-2.5" />
+              Syarat & Ketentuan
             </button>
+            <span>•</span>
+            <button
+              onClick={onOpenTerms}
+              className="hover:text-white underline cursor-pointer"
+            >
+              Kebijakan Privasi
+            </button>
+            <span>•</span>
+            <button
+              onClick={onOpenTerms}
+              className="hover:text-white underline cursor-pointer"
+            >
+              Panduan Komunitas
+            </button>
+          </div>
+          <div className="text-[10px] text-white/60 flex items-center justify-center gap-1.5 mt-1">
+            <span 
+              onClick={handleSecretAccess}
+              className="select-none"
+            >
+              Yayasan Prakarsa Hadji Abdul Muis. All rights reserved.
+            </span>
           </div>
         </div>
       </div>

@@ -24,6 +24,7 @@ interface FundraiserFormProps {
   cmsConfig: CmsConfig;
   onSubmitSuccess: (submission: CampaignSubmission) => void;
   onCancel?: () => void;
+  onOpenTerms?: () => void;
 }
 
 const CATEGORY_OPTIONS: Array<{ id: CampaignCategory; label: string }> = [
@@ -46,7 +47,8 @@ const PRESET_IMAGES = [
 export const FundraiserForm: React.FC<FundraiserFormProps> = ({
   cmsConfig,
   onSubmitSuccess,
-  onCancel
+  onCancel,
+  onOpenTerms
 }) => {
   const formId = useId();
 
@@ -687,6 +689,30 @@ export const FundraiserForm: React.FC<FundraiserFormProps> = ({
                 className="w-full px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#060ee3]"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Terms & Guidelines Disclaimer */}
+        <div className="p-3 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 text-[11px] text-slate-600 dark:text-slate-300 flex items-start gap-2">
+          <ShieldCheck className="w-4 h-4 text-[#060ee3] dark:text-blue-400 shrink-0 mt-0.5" />
+          <div className="space-y-0.5">
+            <p className="leading-relaxed">
+              Dengan mengklik <strong>Klik Ajukan Donasi</strong>, Anda menyatakan data yang diberikan adalah benar dan menyetujui seluruh{' '}
+              {onOpenTerms ? (
+                <button
+                  type="button"
+                  onClick={onOpenTerms}
+                  className="text-[#060ee3] dark:text-blue-400 font-bold underline cursor-pointer hover:text-blue-800"
+                >
+                  Ketentuan Penggalang Dana & Kebijakan Layanan
+                </button>
+              ) : (
+                <span className="text-[#060ee3] dark:text-blue-400 font-bold">
+                  Ketentuan Penggalang Dana & Kebijakan Layanan
+                </span>
+              )}{' '}
+              PARAMIS FOUNDATION.
+            </p>
           </div>
         </div>
 

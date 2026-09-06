@@ -62,6 +62,7 @@ import {
 import { ParamisLogo } from './ParamisLogo';
 import { AdminSubmissionsTab } from './AdminSubmissionsTab';
 import { AdminWebsiteFileEditor } from './AdminWebsiteFileEditor';
+import { AdminCreateCampaignView } from './AdminCreateCampaignView';
 
 interface AdminDashboardProps {
   cmsConfig: CmsConfig;
@@ -74,7 +75,7 @@ interface AdminDashboardProps {
   onExitAdmin?: () => void;
 }
 
-type AdminTab = 'traffic' | 'submissions' | 'files' | 'campaigns' | 'profile' | 'logos' | 'navigation' | 'services' | 'volunteers' | 'reports';
+type AdminTab = 'traffic' | 'create_campaign' | 'submissions' | 'campaigns' | 'files' | 'logos' | 'navigation' | 'profile' | 'services' | 'volunteers' | 'reports';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   cmsConfig,
@@ -429,6 +430,19 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         <div className="flex items-center gap-1.5">
           <button
+            type="button"
+            onClick={() => {
+              setActiveTab('create_campaign');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            className="px-2.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold flex items-center gap-1 shadow-xs cursor-pointer transition-all active:scale-95"
+            title="Buat Program Galang Donasi Baru"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>+ Buat Donasi</span>
+          </button>
+
+          <button
             onClick={onTriggerEmailModal}
             className="px-2.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-[11px] font-semibold border border-white/20 flex items-center gap-1 cursor-pointer transition-colors"
             title="Kirim Laporan Donasi via Email"
@@ -485,6 +499,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         <button
           role="tab"
+          aria-selected={activeTab === 'create_campaign'}
+          onClick={() => setActiveTab('create_campaign')}
+          className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
+            activeTab === 'create_campaign'
+              ? 'bg-emerald-600 text-white shadow-xs'
+              : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100'
+          }`}
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>+ Buat Galang Donasi</span>
+        </button>
+
+        <button
+          role="tab"
           aria-selected={activeTab === 'submissions'}
           onClick={() => setActiveTab('submissions')}
           className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
@@ -500,6 +528,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {getCampaignSubmissions().filter(s => s.status === 'pending').length}
             </span>
           )}
+        </button>
+
+        <button
+          role="tab"
+          aria-selected={activeTab === 'campaigns'}
+          onClick={() => setActiveTab('campaigns')}
+          className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
+            activeTab === 'campaigns'
+              ? 'bg-[#060ee3] text-white shadow-xs'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+          }`}
+        >
+          <Heart className="w-3.5 h-3.5" />
+          <span>Katalog Donasi ({campaigns.length})</span>
         </button>
 
         <button
@@ -560,20 +602,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         <button
           role="tab"
-          aria-selected={activeTab === 'campaigns'}
-          onClick={() => setActiveTab('campaigns')}
-          className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
-            activeTab === 'campaigns'
-              ? 'bg-[#060ee3] text-white shadow-xs'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-          }`}
-        >
-          <Heart className="w-3.5 h-3.5" />
-          <span>Proyek ({campaigns.length})</span>
-        </button>
-
-        <button
-          role="tab"
           aria-selected={activeTab === 'services'}
           onClick={() => setActiveTab('services')}
           className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
@@ -620,6 +648,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* ======================================================== */}
       {activeTab === 'traffic' && (
         <div className="space-y-4 animate-in fade-in">
+          {/* Quick Action: Buat Galang Donasi Baru Banner */}
+          <div className="p-3.5 rounded-2xl bg-linear-to-r from-blue-700 via-[#060ee3] to-indigo-700 text-white shadow-md flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 text-amber-300 text-[11px] font-bold mb-0.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Buka Penggalangan Dana Baru</span>
+              </div>
+              <p className="text-[11px] text-blue-100 truncate">
+                Terbitkan program donasi yayasan dan langsung terima donasi online.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('create_campaign')}
+              className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-xs flex items-center gap-1 shrink-0 cursor-pointer transition-all active:scale-95"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>+ Buat Donasi</span>
+            </button>
+          </div>
+
           {/* Quick Metrics */}
           <div className="grid grid-cols-2 gap-2.5">
             <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
@@ -748,6 +797,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       {/* ======================================================== */}
       {activeTab === 'submissions' && (
         <AdminSubmissionsTab />
+      )}
+
+      {/* ======================================================== */}
+      {/* PEMBUATAN GALANG DONASI BARU RESMI YAYASAN               */}
+      {/* ======================================================== */}
+      {activeTab === 'create_campaign' && (
+        <AdminCreateCampaignView
+          onCampaignCreated={(camp) => {
+            setSavedSuccess(true);
+            setTimeout(() => setSavedSuccess(false), 3000);
+            setActiveTab('campaigns');
+          }}
+          onCancelOrGoCatalog={() => setActiveTab('campaigns')}
+        />
       )}
 
       {/* ======================================================== */}

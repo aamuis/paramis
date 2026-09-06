@@ -71,6 +71,8 @@ function saveToStorage<T>(key: string, data: T): void {
 // Getters
 export function getCmsConfig(): CmsConfig {
   const config = loadFromStorage<CmsConfig>(STORAGE_KEYS.CMS_CONFIG, INITIAL_CMS_CONFIG);
+  let changed = false;
+
   // Auto-migrate if previous default banner text is present
   if (
     config.heroBannerTitle === "Wujudkan Harapan, Salurkan Donasi Terbaik Anda" ||
@@ -78,8 +80,36 @@ export function getCmsConfig(): CmsConfig {
   ) {
     config.heroBannerTitle = INITIAL_CMS_CONFIG.heroBannerTitle;
     config.heroBannerSubtitle = INITIAL_CMS_CONFIG.heroBannerSubtitle;
+    changed = true;
+  }
+
+  // Auto-migrate customMenuItems to ensure zakat calculator and terms are properly configured
+  if (config.customMenuItems && Array.isArray(config.customMenuItems)) {
+    const zakatMenu = config.customMenuItems.find(m => m.id === 'menu-zakat');
+    if (zakatMenu && (zakatMenu.pathOrTab === 'donations' || zakatMenu.pathOrTab === '')) {
+      zakatMenu.pathOrTab = 'zakat';
+      changed = true;
+    }
+    if (!config.customMenuItems.some(m => m.id === 'menu-terms' || m.pathOrTab === 'terms')) {
+      config.customMenuItems.push({
+        id: "menu-terms",
+        title: "Syarat & Ketentuan",
+        pathOrTab: "terms",
+        iconName: "FileText",
+        isExternal: false,
+        isActive: true
+      });
+      changed = true;
+    }
+  } else {
+    config.customMenuItems = INITIAL_CMS_CONFIG.customMenuItems;
+    changed = true;
+  }
+
+  if (changed) {
     saveToStorage(STORAGE_KEYS.CMS_CONFIG, config);
   }
+
   return config;
 }
 
