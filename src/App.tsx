@@ -85,7 +85,7 @@ export function App() {
   const [isAmbulanceModalOpen, setIsAmbulanceModalOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
 
-  // Secret Admin Authentication State (Only owner knows how to access)
+  // Secret Admin Authentication State (Only owner knows PIN / secret triggers)
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(() => {
     return sessionStorage.getItem('paramis_admin_auth') === 'true';
   });

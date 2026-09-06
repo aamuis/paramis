@@ -145,9 +145,10 @@ export interface ServiceItem {
   title: string;
   description: string;
   iconName: string;
-  category: CampaignCategory;
+  category: CampaignCategory | string;
   badge: string;
   beneficiaries: string;
+  isFeatured?: boolean;
 }
 
 export interface CustomMenuItem {
@@ -158,6 +159,13 @@ export interface CustomMenuItem {
   isExternal?: boolean;
   externalUrl?: string;
   isActive: boolean;
+}
+
+export interface CustomCategoryItem {
+  id: string;
+  name: string;
+  iconName?: string;
+  description?: string;
 }
 
 export interface CmsConfig {
@@ -176,6 +184,21 @@ export interface CmsConfig {
   whatsapp: string;
   website: string;
   instagram: string;
+  footerDescription?: string;
+  footerCopyright?: string;
+  sectionTitles?: {
+    urgentProgramsTitle?: string;
+    urgentProgramsSubtitle?: string;
+    catalogTitle?: string;
+    catalogSubtitle?: string;
+    servicesTitle?: string;
+    servicesSubtitle?: string;
+    transparencyTitle?: string;
+    transparencySubtitle?: string;
+    volunteersTitle?: string;
+    volunteersSubtitle?: string;
+  };
+  customCategories?: CustomCategoryItem[];
   navigationTitles: {
     home: string;
     donations: string;
@@ -191,10 +214,14 @@ export interface CmsConfig {
   customSplashLogo?: string;
   customFooterLogo?: string;
   qrisImageUrl?: string;
+  qrisMerchantName?: string;
+  qrisNmid?: string;
   bankAccounts: Array<{
     bank: string;
     accountNumber: string;
     accountName: string;
+    notes?: string;
+    isActive?: boolean;
   }>;
 }
 

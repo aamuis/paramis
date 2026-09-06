@@ -34,7 +34,20 @@ import {
   Layers,
   HeartHandshake,
   Pencil,
-  FileCode
+  FileCode,
+  Building2,
+  QrCode,
+  Tag,
+  FolderPlus,
+  Star,
+  Flame,
+  BookOpen,
+  PanelBottom,
+  UserCheck,
+  FileCheck,
+  ArrowLeft,
+  Grid,
+  ChevronRight
 } from 'lucide-react';
 import { 
   DonationCampaign, 
@@ -63,6 +76,17 @@ import { ParamisLogo } from './ParamisLogo';
 import { AdminSubmissionsTab } from './AdminSubmissionsTab';
 import { AdminWebsiteFileEditor } from './AdminWebsiteFileEditor';
 import { AdminCreateCampaignView } from './AdminCreateCampaignView';
+import { AdminVolunteerAccView } from './admin/AdminVolunteerAccView';
+import { AdminBankQrisView } from './admin/AdminBankQrisView';
+import { AdminWebsiteContentView } from './admin/AdminWebsiteContentView';
+import { AdminMenusCategoriesView } from './admin/AdminMenusCategoriesView';
+import { AdminServicesView } from './admin/AdminServicesView';
+import { AdminUrgentProgramsView } from './admin/AdminUrgentProgramsView';
+import { AdminTransparencyReportsView } from './admin/AdminTransparencyReportsView';
+import { AdminDonationCatalogView } from './admin/AdminDonationCatalogView';
+import { AdminLegalTermsEditorView } from './admin/AdminLegalTermsEditorView';
+import { AdminFooterEditorView } from './admin/AdminFooterEditorView';
+import { AdminLogoEditorView } from './admin/AdminLogoEditorView';
 
 interface AdminDashboardProps {
   cmsConfig: CmsConfig;
@@ -75,7 +99,23 @@ interface AdminDashboardProps {
   onExitAdmin?: () => void;
 }
 
-type AdminTab = 'traffic' | 'create_campaign' | 'submissions' | 'campaigns' | 'files' | 'logos' | 'navigation' | 'profile' | 'services' | 'volunteers' | 'reports';
+type AdminTab = 
+  | 'overview'
+  | 'traffic' 
+  | 'create_campaign' 
+  | 'volunteers_acc'
+  | 'bank_qris'
+  | 'website_content'
+  | 'menus_categories'
+  | 'services'
+  | 'urgent_programs'
+  | 'transparency'
+  | 'campaigns'
+  | 'legal_terms'
+  | 'footer'
+  | 'logos'
+  | 'submissions' 
+  | 'files';
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   cmsConfig,
@@ -87,7 +127,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onTriggerEmailModal,
   onExitAdmin
 }) => {
-  const [activeTab, setActiveTab] = useState<AdminTab>('traffic');
+  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   
   // CMS Editable Form State
   const [formData, setFormData] = useState<CmsConfig>({ ...cmsConfig });
@@ -403,6 +443,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const totalDana = transactions.filter(t => t.status === 'verified').reduce((a, b) => a + b.amount, 0);
   const pendingCount = transactions.filter(t => t.status === 'pending').length;
   const verifiedVolunteers = volunteers.filter(v => v.status === 'verified_auto' || v.status === 'approved').length;
+  const pendingVolunteersCount = volunteers.filter(v => v.status === 'pending' || !v.status).length;
 
   const filteredTransactions = transactions.filter(t => 
     t.donorName.toLowerCase().includes(txSearch.toLowerCase()) ||
@@ -472,12 +513,60 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         </div>
       )}
 
-      {/* Sub-tabs Navigation - Clean, Neat & Highly Accessible */}
+      {/* Quick Select Module Dropdown for Instant Jumping on any screen */}
+      <div className="flex items-center gap-2 bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs shadow-xs">
+        <span className="font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap flex items-center gap-1.5 pl-1">
+          <Layers className="w-4 h-4 text-[#060ee3] dark:text-blue-400" />
+          <span className="hidden sm:inline">Pilih Modul Admin:</span>
+          <span className="sm:hidden">Modul:</span>
+        </span>
+        <select
+          value={activeTab}
+          onChange={(e) => setActiveTab(e.target.value as AdminTab)}
+          className="flex-1 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold text-xs focus:outline-none focus:ring-2 focus:ring-[#060ee3]"
+          aria-label="Pilih Modul Pengelolaan"
+        >
+          <option value="overview">📋 Pusat Kontrol (Semua 11 Modul Pengelolaan)</option>
+          <option value="volunteers_acc">1. ACC Relawan ({pendingVolunteersCount} Menunggu)</option>
+          <option value="bank_qris">2. Rekening Bank & Barcode QRIS ({cmsConfig.bankAccounts.length} Bank)</option>
+          <option value="website_content">3. Edit Isi & Judul Website Per Bagian</option>
+          <option value="menus_categories">4. Tambah Menu & Kategori Baru ({(cmsConfig.customMenuItems || []).length} Menu)</option>
+          <option value="services">5. Layanan & Program Sosial ({services.length} Layanan)</option>
+          <option value="urgent_programs">6. Pengaturan Program Mendesak ({campaigns.filter(c => c.isUrgent).length} Urgent)</option>
+          <option value="campaigns">7. Katalog Donasi ({campaigns.length} Program)</option>
+          <option value="transparency">8. Laporan Transparansi ({reports.length} Laporan)</option>
+          <option value="legal_terms">9. Syarat & Ketentuan / Pusat Legalitas</option>
+          <option value="footer">10. Edit Footer & Kontak Resmi</option>
+          <option value="logos">11. Edit Logo Website & Splash Screen</option>
+          <option value="traffic">📊 Trafik & Transaksi Donasi Masuk</option>
+          <option value="create_campaign">+ Buat Galang Donasi Baru</option>
+          <option value="submissions">📬 ACC Usulan Donasi Masuk</option>
+          <option value="files">💻 Editor File & Kode Konten Website</option>
+        </select>
+      </div>
+
+      {/* Sub-tabs Navigation - Clean, Modern & Fully Categorized */}
       <div 
         role="tablist" 
         className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none text-xs"
         aria-label="Admin Navigation Tabs"
       >
+        {/* Hub: Semua 11 Modul Pengelolaan */}
+        <button
+          role="tab"
+          aria-selected={activeTab === 'overview'}
+          onClick={() => setActiveTab('overview')}
+          className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
+            activeTab === 'overview'
+              ? 'bg-[#060ee3] text-white shadow-xs'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          <Grid className="w-3.5 h-3.5 text-amber-300" />
+          <span>Semua 11 Modul (Hub)</span>
+        </button>
+
+        {/* 1. Trafik & Donasi */}
         <button
           role="tab"
           aria-selected={activeTab === 'traffic'}
@@ -485,7 +574,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
             activeTab === 'traffic'
               ? 'bg-[#060ee3] text-white shadow-xs'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
           }`}
         >
           <BarChart3 className="w-3.5 h-3.5" />
@@ -497,6 +586,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           )}
         </button>
 
+        {/* 2. Pembuatan Galang Donasi */}
         <button
           role="tab"
           aria-selected={activeTab === 'create_campaign'}
@@ -511,95 +601,72 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           <span>+ Buat Galang Donasi</span>
         </button>
 
+        {/* 3. ACC Relawan Verifikasi Pendaftar */}
         <button
           role="tab"
-          aria-selected={activeTab === 'submissions'}
-          onClick={() => setActiveTab('submissions')}
+          aria-selected={activeTab === 'volunteers_acc'}
+          onClick={() => setActiveTab('volunteers_acc')}
           className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
-            activeTab === 'submissions'
+            activeTab === 'volunteers_acc'
               ? 'bg-[#060ee3] text-white shadow-xs'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
           }`}
         >
-          <HeartHandshake className="w-3.5 h-3.5" />
-          <span>ACC Donasi</span>
-          {getCampaignSubmissions().filter(s => s.status === 'pending').length > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-white text-[9px] font-bold">
-              {getCampaignSubmissions().filter(s => s.status === 'pending').length}
+          <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
+          <span>ACC Relawan</span>
+          {pendingVolunteersCount > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[9px] font-bold">
+              {pendingVolunteersCount}
             </span>
           )}
         </button>
 
+        {/* 4. Bank Transfer & QRIS Barcode */}
         <button
           role="tab"
-          aria-selected={activeTab === 'campaigns'}
-          onClick={() => setActiveTab('campaigns')}
+          aria-selected={activeTab === 'bank_qris'}
+          onClick={() => setActiveTab('bank_qris')}
           className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
-            activeTab === 'campaigns'
+            activeTab === 'bank_qris'
               ? 'bg-[#060ee3] text-white shadow-xs'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
           }`}
         >
-          <Heart className="w-3.5 h-3.5" />
-          <span>Katalog Donasi ({campaigns.length})</span>
+          <Building2 className="w-3.5 h-3.5 text-blue-500" />
+          <span>Bank & QRIS</span>
         </button>
 
+        {/* 5. Edit Isi Website & Judul */}
         <button
           role="tab"
-          aria-selected={activeTab === 'files'}
-          onClick={() => setActiveTab('files')}
+          aria-selected={activeTab === 'website_content'}
+          onClick={() => setActiveTab('website_content')}
           className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
-            activeTab === 'files'
+            activeTab === 'website_content'
               ? 'bg-[#060ee3] text-white shadow-xs'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
           }`}
         >
-          <FileCode className="w-3.5 h-3.5" />
-          <span>Editor File & Konten</span>
+          <FileText className="w-3.5 h-3.5 text-indigo-500" />
+          <span>Isi & Judul Website</span>
         </button>
 
+        {/* 6. Menambahkan Menu & Kategori Baru */}
         <button
           role="tab"
-          aria-selected={activeTab === 'logos'}
-          onClick={() => setActiveTab('logos')}
+          aria-selected={activeTab === 'menus_categories'}
+          onClick={() => setActiveTab('menus_categories')}
           className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
-            activeTab === 'logos'
+            activeTab === 'menus_categories'
               ? 'bg-[#060ee3] text-white shadow-xs'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
           }`}
         >
-          <Image className="w-3.5 h-3.5" />
-          <span>Logo & Tampilan</span>
+          <FolderPlus className="w-3.5 h-3.5 text-amber-500" />
+          <span>Menu & Kategori Baru</span>
         </button>
 
-        <button
-          role="tab"
-          aria-selected={activeTab === 'navigation'}
-          onClick={() => setActiveTab('navigation')}
-          className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
-            activeTab === 'navigation'
-              ? 'bg-[#060ee3] text-white shadow-xs'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-          }`}
-        >
-          <Menu className="w-3.5 h-3.5" />
-          <span>Menu & Navigasi</span>
-        </button>
-
-        <button
-          role="tab"
-          aria-selected={activeTab === 'profile'}
-          onClick={() => setActiveTab('profile')}
-          className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
-            activeTab === 'profile'
-              ? 'bg-[#060ee3] text-white shadow-xs'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-          }`}
-        >
-          <Building className="w-3.5 h-3.5" />
-          <span>Profil & Kontak</span>
-        </button>
-
+        {/* 7. Layanan, Program & Pilihan */}
         <button
           role="tab"
           aria-selected={activeTab === 'services'}
@@ -607,41 +674,595 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
             activeTab === 'services'
               ? 'bg-[#060ee3] text-white shadow-xs'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
           }`}
         >
-          <Layers className="w-3.5 h-3.5" />
-          <span>Layanan ({services.length})</span>
+          <Layers className="w-3.5 h-3.5 text-sky-500" />
+          <span>Layanan & Pilihan</span>
         </button>
 
+        {/* 8. Edit Menu Program Mendesak */}
         <button
           role="tab"
-          aria-selected={activeTab === 'volunteers'}
-          onClick={() => setActiveTab('volunteers')}
+          aria-selected={activeTab === 'urgent_programs'}
+          onClick={() => setActiveTab('urgent_programs')}
           className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
-            activeTab === 'volunteers'
-              ? 'bg-[#060ee3] text-white shadow-xs'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+            activeTab === 'urgent_programs'
+              ? 'bg-rose-600 text-white shadow-xs'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
           }`}
         >
-          <Users className="w-3.5 h-3.5" />
-          <span>Relawan ({volunteers.length})</span>
+          <Flame className="w-3.5 h-3.5 text-rose-500" />
+          <span>Program Mendesak</span>
         </button>
 
+        {/* 9. Edit Laporan Transparan */}
         <button
           role="tab"
-          aria-selected={activeTab === 'reports'}
-          onClick={() => setActiveTab('reports')}
+          aria-selected={activeTab === 'transparency'}
+          onClick={() => setActiveTab('transparency')}
           className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
-            activeTab === 'reports'
+            activeTab === 'transparency'
               ? 'bg-[#060ee3] text-white shadow-xs'
-              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
           }`}
         >
-          <FileText className="w-3.5 h-3.5" />
-          <span>Laporan ({reports.length})</span>
+          <FileCheck className="w-3.5 h-3.5 text-emerald-500" />
+          <span>Laporan Transparan</span>
+        </button>
+
+        {/* 10. Edit Katalog Donasi */}
+        <button
+          role="tab"
+          aria-selected={activeTab === 'campaigns'}
+          onClick={() => setActiveTab('campaigns')}
+          className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
+            activeTab === 'campaigns'
+              ? 'bg-[#060ee3] text-white shadow-xs'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          <Heart className="w-3.5 h-3.5 text-rose-500" />
+          <span>Katalog Donasi ({campaigns.length})</span>
+        </button>
+
+        {/* 11. Edit Syarat & Ketentuan */}
+        <button
+          role="tab"
+          aria-selected={activeTab === 'legal_terms'}
+          onClick={() => setActiveTab('legal_terms')}
+          className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
+            activeTab === 'legal_terms'
+              ? 'bg-[#060ee3] text-white shadow-xs'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          <BookOpen className="w-3.5 h-3.5 text-blue-500" />
+          <span>Syarat & Ketentuan</span>
+        </button>
+
+        {/* 12. Edit Footer & Profil */}
+        <button
+          role="tab"
+          aria-selected={activeTab === 'footer'}
+          onClick={() => setActiveTab('footer')}
+          className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
+            activeTab === 'footer'
+              ? 'bg-[#060ee3] text-white shadow-xs'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          <PanelBottom className="w-3.5 h-3.5 text-slate-500" />
+          <span>Edit Footer</span>
+        </button>
+
+        {/* 13. Edit Logo Website & Splash */}
+        <button
+          role="tab"
+          aria-selected={activeTab === 'logos'}
+          onClick={() => setActiveTab('logos')}
+          className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
+            activeTab === 'logos'
+              ? 'bg-[#060ee3] text-white shadow-xs'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          <Image className="w-3.5 h-3.5 text-purple-500" />
+          <span>Edit Logo</span>
+        </button>
+
+        {/* 14. ACC Donasi Masuk dari Pengunjung */}
+        <button
+          role="tab"
+          aria-selected={activeTab === 'submissions'}
+          onClick={() => setActiveTab('submissions')}
+          className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
+            activeTab === 'submissions'
+              ? 'bg-[#060ee3] text-white shadow-xs'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          <HeartHandshake className="w-3.5 h-3.5 text-emerald-500" />
+          <span>ACC Usulan Donasi</span>
+          {getCampaignSubmissions().filter(s => s.status === 'pending').length > 0 && (
+            <span className="px-1.5 py-0.2 rounded-full bg-emerald-500 text-white text-[9px] font-bold">
+              {getCampaignSubmissions().filter(s => s.status === 'pending').length}
+            </span>
+          )}
+        </button>
+
+        {/* 15. Editor File & Konten Teks Langsung */}
+        <button
+          role="tab"
+          aria-selected={activeTab === 'files'}
+          onClick={() => setActiveTab('files')}
+          className={`px-3 py-2 rounded-xl font-bold whitespace-nowrap cursor-pointer transition-all flex items-center gap-1.5 ${
+            activeTab === 'files'
+              ? 'bg-[#060ee3] text-white shadow-xs'
+              : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50'
+          }`}
+        >
+          <FileCode className="w-3.5 h-3.5 text-blue-600" />
+          <span>Editor File</span>
         </button>
       </div>
+
+      {/* ======================================================== */}
+      {/* 0. PUSAT KONTROL & 11 MODUL PENGELOLAAN YAYASAN (HUB)     */}
+      {/* ======================================================== */}
+      {activeTab === 'overview' && (
+        <div className="space-y-4 animate-in fade-in">
+          {/* Welcome Hub Banner */}
+          <div className="p-4 rounded-3xl bg-linear-to-br from-[#060ee3] via-[#0b15b8] to-[#040854] text-white shadow-lg relative overflow-hidden border border-blue-400/20">
+            <div className="relative z-10 space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 text-[10px] font-bold text-amber-300 border border-white/20">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Pusat Kontrol Lengkap (11 Modul Aktif)</span>
+              </div>
+              <h3 className="text-base sm:text-lg font-black leading-tight">
+                Panel Pengelolaan CMS PARAMIS FOUNDATION
+              </h3>
+              <p className="text-xs text-blue-100/90 leading-relaxed max-w-xl">
+                Seluruh 11 modul pengelolaan yang telah dibuat kini tampil lengkap di bawah ini. Anda dapat mengklik modul manapun untuk langsung mengedit konten, menyetujui relawan, mengatur rekening bank, dan mengelola donasi secara real-time.
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Metrics Ribbon */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block">Total Donasi Terverifikasi</span>
+              <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5 block truncate">
+                Rp {totalDana.toLocaleString('id-ID')}
+              </span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block">Relawan Menunggu ACC</span>
+              <span className="text-sm font-black text-amber-600 dark:text-amber-400 mt-0.5 block">
+                {pendingVolunteersCount} Pendaftar
+              </span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block">Rekening Bank & QRIS</span>
+              <span className="text-sm font-black text-blue-600 dark:text-blue-400 mt-0.5 block">
+                {cmsConfig.bankAccounts.length} Rekening Aktif
+              </span>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block">Layanan Pilihan Beranda</span>
+              <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 mt-0.5 block">
+                {services.filter(s => s.isFeatured).length} Layanan Unggulan
+              </span>
+            </div>
+          </div>
+
+          {/* Section Heading */}
+          <div className="flex items-center justify-between pt-1">
+            <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <Grid className="w-4 h-4 text-[#060ee3]" />
+              <span>Daftar 11 Modul Pengelolaan Website</span>
+            </h4>
+            <span className="text-[10px] text-slate-400">Pilih untuk mengelola</span>
+          </div>
+
+          {/* The 11 Modules Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* 1. ACC Relawan */}
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-emerald-500 dark:hover:border-emerald-500 transition-all flex flex-col justify-between group">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                      1
+                    </div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">ACC Relawan</span>
+                  </div>
+                  {pendingVolunteersCount > 0 ? (
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                      {pendingVolunteersCount} Menunggu
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-semibold">
+                      Semua Ter-ACC
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Verifikasi pendaftar relawan kemanusiaan, setujui (ACC), tolak, atau verifikasi serentak (batch ACC).
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('volunteers_acc');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="mt-3 w-full py-2 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-600 text-emerald-700 dark:text-emerald-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <UserCheck className="w-3.5 h-3.5" />
+                <span>Buka ACC Relawan →</span>
+              </button>
+            </div>
+
+            {/* 2. Bank & Barcode QRIS */}
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-blue-500 dark:hover:border-blue-500 transition-all flex flex-col justify-between group">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center font-bold text-xs">
+                      2
+                    </div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">Bank & QRIS</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[10px] font-bold">
+                    {cmsConfig.bankAccounts.length} Rekening
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Tambah dan edit nomor rekening bank tujuan donasi (BCA, Mandiri, BRI, BSI) & ganti barcode QRIS yayasan.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('bank_qris');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="mt-3 w-full py-2 px-3 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-600 text-blue-700 dark:text-blue-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Building2 className="w-3.5 h-3.5" />
+                <span>Atur Bank & QRIS →</span>
+              </button>
+            </div>
+
+            {/* 3. Isi & Judul Website */}
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-indigo-500 dark:hover:border-indigo-500 transition-all flex flex-col justify-between group">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 flex items-center justify-center font-bold text-xs">
+                      3
+                    </div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">Isi & Judul Website</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold">
+                    Teks Langsung
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Ubah nama yayasan, tagline beranda, narasi tentang yayasan, visi misi, dan kustomisasi judul tiap seksi.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('website_content');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="mt-3 w-full py-2 px-3 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-600 text-indigo-700 dark:text-indigo-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Edit Isi Website →</span>
+              </button>
+            </div>
+
+            {/* 4. Menu & Kategori Baru */}
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-amber-500 dark:hover:border-amber-500 transition-all flex flex-col justify-between group">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center font-bold text-xs">
+                      4
+                    </div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">Menu & Kategori Baru</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-[10px] font-bold">
+                    {(cmsConfig.customMenuItems || []).length} Menu Kustom
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Tambah menu navigasi kustom baru (internal / tautan luar) dan kelola kategori penggalangan dana sosial.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('menus_categories');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="mt-3 w-full py-2 px-3 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-600 text-amber-700 dark:text-amber-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <FolderPlus className="w-3.5 h-3.5" />
+                <span>Kelola Menu & Kategori →</span>
+              </button>
+            </div>
+
+            {/* 5. Layanan & Program Sosial */}
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-sky-500 dark:hover:border-sky-500 transition-all flex flex-col justify-between group">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-600 flex items-center justify-center font-bold text-xs">
+                      5
+                    </div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">Layanan & Program Sosial</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 text-[10px] font-bold">
+                    {services.length} Layanan
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Tambah layanan sosial baru, edit narasi program, estimasi penerima manfaat, dan badge status layanan.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('services');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="mt-3 w-full py-2 px-3 rounded-xl bg-sky-50 dark:bg-sky-950/60 hover:bg-sky-600 text-sky-700 dark:text-sky-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <HeartHandshake className="w-3.5 h-3.5" />
+                <span>Kelola Layanan Sosial →</span>
+              </button>
+            </div>
+
+            {/* 6. Layanan Pilihan (Unggulan Beranda) */}
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-amber-500 dark:hover:border-amber-500 transition-all flex flex-col justify-between group">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center font-bold text-xs">
+                      6
+                    </div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">Layanan Pilihan</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-[10px] font-bold">
+                    {services.filter(s => s.isFeatured).length} Layanan Pilihan
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Fitur 1-klik bintang unggulan untuk menandai layanan yayasan yang diprioritaskan tampil di beranda depan.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('services');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="mt-3 w-full py-2 px-3 rounded-xl bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-600 text-amber-700 dark:text-amber-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Star className="w-3.5 h-3.5" />
+                <span>Atur Layanan Pilihan →</span>
+              </button>
+            </div>
+
+            {/* 7. Program Mendesak (Urgent) */}
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-rose-500 dark:hover:border-rose-500 transition-all flex flex-col justify-between group">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center font-bold text-xs">
+                      7
+                    </div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">Program Mendesak</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-[10px] font-bold">
+                    {campaigns.filter(c => c.isUrgent).length} Urgent
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Fitur 1-klik aktifkan tanda 'Mendesak' agar program galang dana langsung diprioritaskan di baris pertama.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('urgent_programs');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="mt-3 w-full py-2 px-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-600 text-rose-700 dark:text-rose-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Flame className="w-3.5 h-3.5" />
+                <span>Atur Program Mendesak →</span>
+              </button>
+            </div>
+
+            {/* 8. Katalog Donasi */}
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-rose-500 dark:hover:border-rose-500 transition-all flex flex-col justify-between group">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center font-bold text-xs">
+                      8
+                    </div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">Katalog Donasi</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-[10px] font-bold">
+                    {campaigns.length} Program
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Edit target donasi, sisa hari, perbarui foto dan narasi kampanye donasi yang aktif di aplikasi.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('campaigns');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="mt-3 w-full py-2 px-3 rounded-xl bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-600 text-rose-700 dark:text-rose-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Heart className="w-3.5 h-3.5" />
+                <span>Kelola Katalog Donasi →</span>
+              </button>
+            </div>
+
+            {/* 9. Laporan Transparansi */}
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-emerald-500 dark:hover:border-emerald-500 transition-all flex flex-col justify-between group">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                      9
+                    </div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">Laporan Transparansi</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">
+                    {reports.length} Laporan
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Terbitkan bukti pertanggungjawaban kegiatan, total dana tersalurkan, penerima manfaat & dokumentasi.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('transparency');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="mt-3 w-full py-2 px-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-600 text-emerald-700 dark:text-emerald-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <FileCheck className="w-3.5 h-3.5" />
+                <span>Buka Laporan Transparan →</span>
+              </button>
+            </div>
+
+            {/* 10. Syarat & Ketentuan */}
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-blue-500 dark:hover:border-blue-500 transition-all flex flex-col justify-between group">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center font-bold text-xs">
+                      10
+                    </div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">Syarat & Ketentuan</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[10px] font-bold">
+                    Pusat Legalitas
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Edit naskah resmi Syarat & Ketentuan Layanan, Kebijakan Privasi Donatur, dan Panduan Komunitas Yayasan.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('legal_terms');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="mt-3 w-full py-2 px-3 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-600 text-blue-700 dark:text-blue-300 hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Edit Syarat & Ketentuan →</span>
+              </button>
+            </div>
+
+            {/* 11. Edit Footer & Logo */}
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-slate-500 dark:hover:border-slate-500 transition-all flex flex-col justify-between group">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center font-bold text-xs">
+                      11
+                    </div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">Edit Footer & Logo</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-bold">
+                    Kontak & Logo
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Edit kontak resmi WhatsApp, email yayasan, nomor SK Kemenkumham, NPWP, dan upload file logo resmi.
+                </p>
+              </div>
+              <div className="flex items-center gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('footer');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="flex-1 py-2 px-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-800 hover:text-white text-slate-700 dark:text-slate-200 text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <PanelBottom className="w-3.5 h-3.5" />
+                  <span>Edit Footer</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('logos');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="flex-1 py-2 px-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-800 hover:text-white text-slate-700 dark:text-slate-200 text-xs font-bold transition-all flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <Image className="w-3.5 h-3.5" />
+                  <span>Edit Logo</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Extra: Trafik & Transaksi Real-time */}
+            <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs hover:border-[#060ee3] transition-all flex flex-col justify-between group">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-[#060ee3] flex items-center justify-center font-bold text-xs">
+                      📊
+                    </div>
+                    <span className="font-bold text-xs text-slate-900 dark:text-white">Trafik & Transaksi</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950 text-[#060ee3] text-[10px] font-bold">
+                    {transactions.length} Transaksi
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Grafik donasi real-time, verifikasi bukti transfer donatur, dan pantau log transaksi masuk.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab('traffic');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="mt-3 w-full py-2 px-3 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-[#060ee3] text-[#060ee3] hover:text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                <span>Lihat Trafik & Transaksi →</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ======================================================== */}
       {/* 1. REAL-TIME DONATION TRAFFIC & INCOMING TRANSACTIONS */}
@@ -826,1460 +1447,129 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       )}
 
       {/* ======================================================== */}
-      {/* 2. LOGO WEBSITE, LOGO SPLASH SCREEN & VISUAL CUSTOMIZATION */}
+      {/* 1. ACC RELAWAN PENDAFTAR                                 */}
       {/* ======================================================== */}
-      {activeTab === 'logos' && (
-        <form onSubmit={handleSaveCms} className="space-y-4 animate-in fade-in">
-          {/* Header Logo */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 text-xs shadow-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-2">
-              <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <Image className="w-4 h-4 text-[#060ee3]" />
-                <span>1. Edit Logo Website (Header Utama)</span>
-              </h4>
-              {formData.customHeaderLogo && (
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, customHeaderLogo: undefined })}
-                  className="text-[10px] text-rose-500 hover:underline cursor-pointer"
-                >
-                  Kembalikan ke Logo Default
-                </button>
-              )}
-            </div>
-
-            {/* Live Preview Box */}
-            <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-900/80 border border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center gap-1.5">
-              <span className="text-[10px] text-slate-400">Pratinjau Logo Header:</span>
-              <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-xs border border-slate-200 dark:border-slate-700">
-                <ParamisLogo 
-                  variant="auto" 
-                  size="md" 
-                  customLogoUrl={formData.customHeaderLogo} 
-                />
-              </div>
-            </div>
-
-            {/* File Upload or URL */}
-            <div className="space-y-2">
-              <div>
-                <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                  Unggah File Gambar Logo (PNG / JPG / SVG / WebP)
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload(e, 'customHeaderLogo')}
-                  className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 dark:file:bg-blue-950 file:text-[#060ee3] dark:file:text-blue-300 hover:file:bg-blue-100 cursor-pointer"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                  Atau Masukkan Tautan URL Logo
-                </label>
-                <input
-                  type="text"
-                  placeholder="https://domain.com/logo.png"
-                  value={formData.customHeaderLogo || ''}
-                  onChange={(e) => setFormData({ ...formData, customHeaderLogo: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Splash Screen Logo */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 text-xs shadow-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-2">
-              <h4 className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-amber-500" />
-                <span>2. Edit Logo Splash Screen (Layar Pembuka Mobile)</span>
-              </h4>
-              <div className="flex gap-2 text-[10px]">
-                {formData.customHeaderLogo && (
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, customSplashLogo: formData.customHeaderLogo })}
-                    className="text-[#060ee3] dark:text-blue-400 hover:underline cursor-pointer font-semibold"
-                  >
-                    Samakan dgn Header
-                  </button>
-                )}
-                {formData.customSplashLogo && (
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, customSplashLogo: undefined })}
-                    className="text-rose-500 hover:underline cursor-pointer"
-                  >
-                    Reset
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <p className="text-[11px] text-slate-500 leading-relaxed">
-              Logo ini muncul pada splash screen saat aplikasi pertama kali dibuka di HP, ditampilkan dengan presisi proporsional tanpa terpotong.
-            </p>
-
-            {/* Live Preview on Splash Screen Background */}
-            <div className="p-4 rounded-2xl bg-gradient-to-b from-[#060ee3] via-[#050ca8] to-[#030659] text-white flex flex-col items-center justify-center gap-2 shadow-inner">
-              <span className="text-[10px] text-blue-200">Pratinjau Layar Pembuka:</span>
-              <div className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20">
-                <ParamisLogo 
-                  variant="white" 
-                  size="lg" 
-                  customLogoUrl={formData.customSplashLogo || formData.customHeaderLogo} 
-                />
-              </div>
-              <span className="text-[9px] text-blue-100 font-mono">Presisi HP • Bebas Clipping</span>
-            </div>
-
-            {/* File Upload or URL */}
-            <div className="space-y-2">
-              <div>
-                <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                  Unggah Gambar Logo Splash Screen Khusus
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload(e, 'customSplashLogo')}
-                  className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 dark:file:bg-blue-950 file:text-[#060ee3] dark:file:text-blue-300 hover:file:bg-blue-100 cursor-pointer"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                  Atau URL Logo Splash Screen
-                </label>
-                <input
-                  type="text"
-                  placeholder="https://domain.com/splash-logo.png"
-                  value={formData.customSplashLogo || ''}
-                  onChange={(e) => setFormData({ ...formData, customSplashLogo: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Hero Banner & QRIS */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 text-xs shadow-xs">
-            <h4 className="font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-700 pb-2 flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-emerald-500" />
-              <span>3. Teks Banner Hero & Kode QRIS Donasi</span>
-            </h4>
-
-            <div>
-              <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                Judul Hero Banner
-              </label>
-              <input
-                type="text"
-                value={formData.heroBannerTitle}
-                onChange={(e) => setFormData({ ...formData, heroBannerTitle: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-semibold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                Sub-judul Hero Banner
-              </label>
-              <textarea
-                rows={2}
-                value={formData.heroBannerSubtitle}
-                onChange={(e) => setFormData({ ...formData, heroBannerSubtitle: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                URL Gambar Kode QRIS Donasi
-              </label>
-              <input
-                type="text"
-                placeholder="https://..."
-                value={formData.qrisImageUrl || ''}
-                onChange={(e) => setFormData({ ...formData, qrisImageUrl: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 px-4 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
-          >
-            <Save className="w-4 h-4" />
-            <span>Simpan Semua Logo & Tampilan</span>
-          </button>
-        </form>
+      {activeTab === 'volunteers_acc' && (
+        <AdminVolunteerAccView 
+          volunteers={volunteers}
+        />
       )}
 
       {/* ======================================================== */}
-      {/* 3. MENU & NAVIGASI EDITOR (EDIT EXISTING & ADD CUSTOM) */}
+      {/* 2. BANK TRANSFER & BARCODE QRIS                          */}
       {/* ======================================================== */}
-      {activeTab === 'navigation' && (
-        <div className="space-y-4 animate-in fade-in">
-          {/* Edit Bottom Nav Tab Titles */}
-          <form onSubmit={handleSaveCms} className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 text-xs shadow-xs">
-            <h4 className="font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-700 pb-2 flex items-center gap-1.5">
-              <Menu className="w-4 h-4 text-[#060ee3]" />
-              <span>1. Edit Judul Menu Bawah (Navigasi Utama)</span>
-            </h4>
-            <p className="text-[11px] text-slate-500">
-              Ubah label nama tab yang tampil pada navigasi bawah untuk pengguna. (Logo admin disembunyikan sepenuhnya).
-            </p>
-
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <label className="block text-slate-500 text-[11px] mb-1 font-semibold">Tab 1 (Beranda)</label>
-                <input
-                  type="text"
-                  value={formData.navigationTitles.home}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    navigationTitles: { ...formData.navigationTitles, home: e.target.value }
-                  })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-500 text-[11px] mb-1 font-semibold">Tab 2 (Donasi)</label>
-                <input
-                  type="text"
-                  value={formData.navigationTitles.donations}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    navigationTitles: { ...formData.navigationTitles, donations: e.target.value }
-                  })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-500 text-[11px] mb-1 font-semibold">Tab 3 (Relawan)</label>
-                <input
-                  type="text"
-                  value={formData.navigationTitles.volunteers}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    navigationTitles: { ...formData.navigationTitles, volunteers: e.target.value }
-                  })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-500 text-[11px] mb-1 font-semibold">Tab 4 (Laporan Transparansi)</label>
-                <input
-                  type="text"
-                  value={formData.navigationTitles.transparency}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    navigationTitles: { ...formData.navigationTitles, transparency: e.target.value }
-                  })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="mt-2 py-2 px-4 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white font-bold text-xs cursor-pointer flex items-center justify-center gap-1.5"
-            >
-              <Save className="w-3.5 h-3.5" />
-              <span>Simpan Nama Menu Bawah</span>
-            </button>
-          </form>
-
-          {/* Add New Custom Menu Item */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 text-xs shadow-xs">
-            <h4 className="font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-700 pb-2 flex items-center gap-1.5">
-              <Plus className="w-4 h-4 text-emerald-500" />
-              <span>2. Tambah Menu Kustom / Tautan Baru</span>
-            </h4>
-            <p className="text-[11px] text-slate-500">
-              Admin dapat menambahkan menu baru untuk fitur spesifik seperti Kalkulator Zakat, Layanan Ambulans, Konsultasi, atau tautan eksternal.
-            </p>
-
-            <form onSubmit={handleAddCustomMenu} className="space-y-3">
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">
-                  Nama / Judul Menu *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Layanan Ambulans 24 Jam"
-                  value={newMenuTitle}
-                  onChange={(e) => setNewMenuTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">
-                    Tujuan Menu
-                  </label>
-                  <select
-                    value={newMenuTarget}
-                    onChange={(e) => setNewMenuTarget(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-                  >
-                    <option value="donations">Buka Tab Donasi</option>
-                    <option value="volunteers">Buka Tab Relawan</option>
-                    <option value="transparency">Buka Tab Laporan</option>
-                    <option value="external">Tautan Luar (URL)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">
-                    Ikon Pilihan
-                  </label>
-                  <select
-                    value={newMenuIcon}
-                    onChange={(e) => setNewMenuIcon(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-                  >
-                    <option value="Calculator">Kalkulator Zakat</option>
-                    <option value="Truck">Mobil Ambulans</option>
-                    <option value="Heart">Donasi Kasih</option>
-                    <option value="Shield">Keamanan & Legalitas</option>
-                    <option value="Globe">Web Eksternal</option>
-                    <option value="HelpCircle">Bantuan / FAQ</option>
-                    <option value="MessageCircle">WhatsApp Konsultasi</option>
-                  </select>
-                </div>
-              </div>
-
-              {newMenuTarget === 'external' && (
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">
-                    URL Tautan Eksternal *
-                  </label>
-                  <input
-                    type="url"
-                    required
-                    placeholder="https://wa.me/6285195555674 atau web lain"
-                    value={newMenuExternalUrl}
-                    onChange={(e) => setNewMenuExternalUrl(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-                  />
-                </div>
-              )}
-
-              <button
-                type="submit"
-                className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Tambahkan Menu Ini ke Aplikasi</span>
-              </button>
-            </form>
-          </div>
-
-          {/* List of Custom Menus */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 text-xs shadow-xs">
-            <h4 className="font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-700 pb-2">
-              Daftar Menu Tambahan Aktif ({formData.customMenuItems?.length || 0})
-            </h4>
-
-            {(!formData.customMenuItems || formData.customMenuItems.length === 0) ? (
-              <p className="text-slate-400 italic py-2 text-center">
-                Belum ada menu tambahan. Tambahkan menu di atas untuk menampilkan shortcut di aplikasi.
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {formData.customMenuItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900 dark:text-white">
-                          {item.title}
-                        </span>
-                        <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-semibold ${
-                          item.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
-                        }`}>
-                          {item.isActive ? 'Aktif' : 'Nonaktif'}
-                        </span>
-                      </div>
-                      <p className="text-[10px] text-slate-500 font-mono mt-0.5">
-                        Tujuan: {item.pathOrTab} {item.externalUrl ? `(${item.externalUrl})` : ''}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleCustomMenu(item.id)}
-                        className="px-2 py-1 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[10px] font-semibold cursor-pointer"
-                      >
-                        {item.isActive ? 'Matikan' : 'Aktifkan'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteCustomMenu(item.id)}
-                        className="p-1 text-rose-500 hover:bg-rose-50 rounded-lg cursor-pointer"
-                        title="Hapus Menu"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+      {activeTab === 'bank_qris' && (
+        <AdminBankQrisView 
+          cmsConfig={formData}
+          onConfigSaved={(updated) => {
+            setFormData(updated);
+            setSavedSuccess(true);
+            setTimeout(() => setSavedSuccess(false), 2500);
+          }}
+        />
       )}
 
       {/* ======================================================== */}
-      {/* 4. PROFIL, KONTAK RESMI & LEGALITAS YAYASAN */}
+      {/* 3. EDIT ISI WEBSITE & JUDUL BAGIAN PER BAGIAN            */}
       {/* ======================================================== */}
-      {activeTab === 'profile' && (
-        <form onSubmit={handleSaveCms} className="space-y-4 animate-in fade-in">
-          {/* Identitas Yayasan */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 text-xs shadow-xs">
-            <h4 className="font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-700 pb-2">
-              Identitas & Visi Misi Yayasan
-            </h4>
-
-            <div>
-              <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                Nama Yayasan Resmi
-              </label>
-              <input
-                type="text"
-                value={formData.yayasanName}
-                onChange={(e) => setFormData({ ...formData, yayasanName: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-semibold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                Nama Branding Resmi
-              </label>
-              <input
-                type="text"
-                value={formData.brandName}
-                onChange={(e) => setFormData({ ...formData, brandName: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-semibold"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                Slogan / Tagline
-              </label>
-              <input
-                type="text"
-                value={formData.tagline}
-                onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                Kisah & Sejarah Singkat Yayasan
-              </label>
-              <textarea
-                rows={3}
-                value={formData.aboutStory}
-                onChange={(e) => setFormData({ ...formData, aboutStory: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                Visi Yayasan
-              </label>
-              <textarea
-                rows={2}
-                value={formData.vision || ''}
-                onChange={(e) => setFormData({ ...formData, vision: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-              />
-            </div>
-          </div>
-
-          {/* Alamat & Kontak Resmi (Address updated as requested) */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 text-xs shadow-xs">
-            <h4 className="font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-700 pb-2">
-              Alamat Kantor & Kontak Resmi
-            </h4>
-
-            <div>
-              <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                Alamat Kantor Sekretariat Yayasan
-              </label>
-              <textarea
-                rows={2}
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                placeholder="Jl. Dr. Sumeru Gg. Nasedin No.3, RT.03/RW.02, Cilendek Barat, Kec. Bogor Barat, Kota Bogor, Jawa Barat 16111"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                  WhatsApp Resmi
-                </label>
-                <input
-                  type="text"
-                  value={formData.whatsapp}
-                  onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
-                  placeholder="085195555674"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                  Email Resmi
-                </label>
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="email@paramis.or.id"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                Website Resmi
-              </label>
-              <input
-                type="text"
-                value={formData.website || ''}
-                onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                placeholder="www.paramis.or.id"
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium"
-              />
-            </div>
-          </div>
-
-          {/* Legalitas Yayasan */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 text-xs shadow-xs">
-            <h4 className="font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-700 pb-2">
-              Dokumen Legalitas & Izin Operasional
-            </h4>
-
-            <div>
-              <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                SK Kemenkumham RI
-              </label>
-              <input
-                type="text"
-                value={formData.skKemenkumham}
-                onChange={(e) => setFormData({ ...formData, skKemenkumham: e.target.value })}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5">
-              <div>
-                <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                  NPWP Yayasan
-                </label>
-                <input
-                  type="text"
-                  value={formData.npwp}
-                  onChange={(e) => setFormData({ ...formData, npwp: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-600 dark:text-slate-300 font-semibold mb-1">
-                  Izin Dinsos
-                </label>
-                <input
-                  type="text"
-                  value={formData.izinOperasional}
-                  onChange={(e) => setFormData({ ...formData, izinOperasional: e.target.value })}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Rekening Bank Donasi */}
-          <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 text-xs shadow-xs">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-2">
-              <h4 className="font-bold text-slate-900 dark:text-white">
-                Rekening Bank Resmi Donasi
-              </h4>
-              <button
-                type="button"
-                onClick={handleAddBankAccount}
-                className="text-[#060ee3] dark:text-blue-400 font-bold flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Tambah Bank</span>
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              {formData.bankAccounts?.map((acc, idx) => (
-                <div key={idx} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <input
-                      type="text"
-                      value={acc.bank}
-                      onChange={(e) => {
-                        const updated = [...formData.bankAccounts];
-                        updated[idx].bank = e.target.value;
-                        setFormData({ ...formData, bankAccounts: updated });
-                      }}
-                      className="font-bold bg-transparent border-b border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white pb-0.5 text-xs w-2/3"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteBankAccount(idx)}
-                      className="text-rose-500 hover:text-rose-700 cursor-pointer text-[10px]"
-                    >
-                      Hapus
-                    </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
-                      placeholder="Nomor Rekening"
-                      value={acc.accountNumber}
-                      onChange={(e) => {
-                        const updated = [...formData.bankAccounts];
-                        updated[idx].accountNumber = e.target.value;
-                        setFormData({ ...formData, bankAccounts: updated });
-                      }}
-                      className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 font-mono text-[11px]"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Atas Nama"
-                      value={acc.accountName}
-                      onChange={(e) => {
-                        const updated = [...formData.bankAccounts];
-                        updated[idx].accountName = e.target.value;
-                        setFormData({ ...formData, bankAccounts: updated });
-                      }}
-                      className="px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px]"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full py-3 px-4 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
-          >
-            <Save className="w-4 h-4" />
-            <span>Simpan Profil & Kontak Yayasan</span>
-          </button>
-        </form>
+      {activeTab === 'website_content' && (
+        <AdminWebsiteContentView 
+          cmsConfig={formData}
+          onConfigSaved={(updated) => {
+            setFormData(updated);
+            setSavedSuccess(true);
+            setTimeout(() => setSavedSuccess(false), 2500);
+          }}
+        />
       )}
 
       {/* ======================================================== */}
-      {/* 5. PROYEK & KAMPANYE DONASI */}
+      {/* 4. MENU & KATEGORI BARU                                  */}
       {/* ======================================================== */}
-      {activeTab === 'campaigns' && (
-        <div className="space-y-3 animate-in fade-in">
-          <div className="flex items-center justify-between text-xs px-1">
-            <span className="font-bold text-slate-900 dark:text-white">
-              Katalog Proyek Penggalangan Dana ({campaigns.length})
-            </span>
-            <button
-              onClick={() => setShowAddCampaignModal(true)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white text-[11px] font-bold cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Tambah Proyek</span>
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            {campaigns.map((camp) => (
-              <div
-                key={camp.id}
-                className="p-3 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3 text-xs shadow-xs"
-              >
-                <img 
-                  src={camp.coverImage} 
-                  alt={camp.title} 
-                  className="w-12 h-12 rounded-xl object-cover shrink-0" 
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                    <span className="text-[9px] font-bold text-[#060ee3] dark:text-blue-400 uppercase">
-                      {camp.categoryLabel}
-                    </span>
-                    {camp.isUrgent && (
-                      <span className="px-1.5 py-0.2 rounded-md bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 font-bold text-[8px] uppercase">
-                        Mendesak
-                      </span>
-                    )}
-                    {!camp.active && (
-                      <span className="px-1.5 py-0.2 rounded-md bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold text-[8px] uppercase">
-                        Nonaktif
-                      </span>
-                    )}
-                  </div>
-                  <h5 className="font-bold text-slate-900 dark:text-white truncate">
-                    {camp.title}
-                  </h5>
-                  <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
-                    <span>Target: Rp {camp.targetAmount.toLocaleString('id-ID')}</span>
-                    <span>• Terkumpul: <strong>Rp {camp.collectedAmount.toLocaleString('id-ID')}</strong></span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => handleOpenEditCampaign(camp)}
-                    className="p-2 text-[#060ee3] dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-xl cursor-pointer transition-colors"
-                    title="Edit Seluruh Data Proyek Ini"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-
-                  <button
-                    onClick={() => deleteCampaign(camp.id)}
-                    className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl cursor-pointer transition-colors"
-                    title="Hapus Proyek"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      {activeTab === 'menus_categories' && (
+        <AdminMenusCategoriesView 
+          cmsConfig={formData}
+          onConfigSaved={(updated) => {
+            setFormData(updated);
+            setSavedSuccess(true);
+            setTimeout(() => setSavedSuccess(false), 2500);
+          }}
+        />
       )}
 
       {/* ======================================================== */}
-      {/* 6. PROGRAM LAYANAN YAYASAN */}
+      {/* 5. LAYANAN, PROGRAM & PILIHAN UNGGULAN                   */}
       {/* ======================================================== */}
       {activeTab === 'services' && (
-        <div className="space-y-3 animate-in fade-in">
-          <div className="flex items-center justify-between text-xs px-1">
-            <span className="font-bold text-slate-900 dark:text-white">
-              Pilar Layanan Sosial Yayasan ({services.length})
-            </span>
-            <button
-              onClick={() => setShowAddServiceModal(true)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white text-[11px] font-bold cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Tambah Layanan</span>
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            {services.map((srv) => (
-              <div
-                key={srv.id}
-                className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs space-y-2 shadow-xs"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-[#060ee3] dark:text-blue-400">
-                      {srv.badge || srv.category}
-                    </span>
-                    <h5 className="font-bold text-slate-900 dark:text-white">
-                      {srv.title}
-                    </h5>
-                  </div>
-                  <button
-                    onClick={() => deleteService(srv.id)}
-                    className="p-1.5 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg cursor-pointer"
-                    title="Hapus Layanan"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                  {srv.description}
-                </p>
-
-                <div className="pt-1 border-t border-slate-100 dark:border-slate-700 flex justify-between text-[10px] text-slate-500">
-                  <span>Penerima: <strong>{srv.beneficiaries}</strong></span>
-                  <span className="text-[#060ee3] dark:text-blue-400 font-semibold">Tersalurkan Rutin</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <AdminServicesView 
+          services={services}
+        />
       )}
 
       {/* ======================================================== */}
-      {/* 7. MANAJEMEN PENDAFTAR RELAWAN */}
+      {/* 6. EDIT MENU PROGRAM MENDESAK                            */}
       {/* ======================================================== */}
-      {activeTab === 'volunteers' && (
-        <div className="space-y-3 animate-in fade-in">
-          <div className="flex items-center justify-between text-xs px-1">
-            <span className="font-bold text-slate-900 dark:text-white">
-              Data Pendaftar Relawan ({volunteers.length})
-            </span>
-            <span className="text-emerald-600 font-semibold text-[10px]">
-              {verifiedVolunteers} Terverifikasi Otomatis
-            </span>
-          </div>
-
-          <div className="space-y-2.5">
-            {volunteers.map((vol) => (
-              <div
-                key={vol.id}
-                className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2 text-xs shadow-xs"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h5 className="font-bold text-slate-900 dark:text-white">
-                      {vol.fullName}
-                    </h5>
-                    <p className="text-[11px] text-slate-500">
-                      {vol.profession} • {vol.city} ({vol.age} th)
-                    </p>
-                  </div>
-
-                  <div className="text-right">
-                    <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950 text-[#060ee3] dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                      Skor: {vol.verificationScore}/100
-                    </span>
-                    <p className="text-[9px] font-mono text-slate-400 mt-0.5">{vol.idCardNumber}</p>
-                  </div>
-                </div>
-
-                <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-900 text-[10px] text-slate-600 dark:text-slate-300">
-                  <span className="font-bold block mb-0.5">Motivasi:</span>
-                  <p className="italic leading-relaxed">"{vol.motivation}"</p>
-                </div>
-
-                <div className="flex flex-wrap gap-1">
-                  {vol.skills.map((s, idx) => (
-                    <span key={idx} className="text-[9px] px-1.5 py-0.5 rounded-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
-                      {s}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
-                  <span className="text-[10px] text-slate-400">
-                    Ketersediaan: {vol.availability}
-                  </span>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => updateVolunteerStatus(vol.id, 'approved')}
-                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-colors ${
-                        vol.status === 'approved' || vol.status === 'verified_auto'
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-emerald-500 hover:text-white'
-                      }`}
-                    >
-                      Loloskan
-                    </button>
-
-                    <button
-                      onClick={() => updateVolunteerStatus(vol.id, 'rejected')}
-                      className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-100 dark:bg-slate-700 text-rose-500 hover:bg-rose-500 hover:text-white cursor-pointer transition-colors"
-                    >
-                      Tolak
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      {activeTab === 'urgent_programs' && (
+        <AdminUrgentProgramsView 
+          campaigns={campaigns}
+        />
       )}
 
       {/* ======================================================== */}
-      {/* 8. LAPORAN KEGIATAN & TRANSPARANSI PUBLIK */}
+      {/* 7. EDIT LAPORAN TRANSPARAN SOSIAL                        */}
       {/* ======================================================== */}
-      {activeTab === 'reports' && (
-        <div className="space-y-3 animate-in fade-in">
-          <div className="flex items-center justify-between text-xs px-1">
-            <span className="font-bold text-slate-900 dark:text-white">
-              Dokumentasi Kegiatan Sosial & Penyaluran ({reports.length})
-            </span>
-            <button
-              onClick={() => setShowAddReportModal(true)}
-              className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white text-[11px] font-bold cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Publikasi Laporan Baru</span>
-            </button>
-          </div>
-
-          <div className="space-y-2">
-            {reports.map((rep) => (
-              <div
-                key={rep.id}
-                className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs space-y-1.5 shadow-xs"
-              >
-                <div className="flex justify-between items-start">
-                  <h5 className="font-bold text-slate-900 dark:text-white truncate max-w-[240px]">
-                    {rep.title}
-                  </h5>
-                  <span className="text-[10px] text-slate-400 font-mono">{rep.date}</span>
-                </div>
-                <p className="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-2">
-                  {rep.description}
-                </p>
-                <div className="flex justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-700">
-                  <span>Lokasi: <strong>{rep.location}</strong></span>
-                  <span>Anggaran: <strong>Rp {rep.totalBudget.toLocaleString('id-ID')}</strong></span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      {activeTab === 'transparency' && (
+        <AdminTransparencyReportsView 
+          reports={reports}
+        />
       )}
 
-      {/* Modal: Tambah Proyek Donasi (Membuat Donasi Apapun) */}
-      {showAddCampaignModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in overflow-y-auto">
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 p-5 rounded-3xl space-y-3.5 text-xs shadow-2xl my-auto max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <Heart className="w-4 h-4 text-[#060ee3]" />
-                <span>Buat Proyek Donasi Baru</span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowAddCampaignModal(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateCampaign} className="space-y-3">
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Judul Proyek Donasi *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Bantuan Sembako & Beasiswa Santri Yatim"
-                  value={newCampTitle}
-                  onChange={(e) => setNewCampTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Kategori Program</label>
-                  <select
-                    value={newCampCategory}
-                    onChange={(e) => setNewCampCategory(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
-                  >
-                    <option value="pendidikan">Pendidikan</option>
-                    <option value="yatim">Yatim & Dhuafa</option>
-                    <option value="bencana">Tanggap Bencana</option>
-                    <option value="kesehatan">Kesehatan</option>
-                    <option value="dakwah">Dakwah & Ibadah</option>
-                    <option value="ekonomi">Pemberdayaan Ekonomi</option>
-                    <option value="infrastruktur">Infrastruktur Sosial</option>
-                    <option value="kemanusiaan">Kemanusiaan</option>
-                    <option value="zakat">Zakat & Wakaf</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Target Donasi (Rp) *</label>
-                  <input
-                    type="number"
-                    required
-                    min={10000}
-                    value={newCampTarget}
-                    onChange={(e) => setNewCampTarget(parseInt(e.target.value) || 10000000)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold text-[#060ee3] dark:text-blue-400"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Terkumpul Awal (Rp)</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={newCampCollected}
-                    onChange={(e) => setNewCampCollected(parseInt(e.target.value) || 0)}
-                    className="w-full px-2.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Jml Donatur Awal</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={newCampDonors}
-                    onChange={(e) => setNewCampDonors(parseInt(e.target.value) || 0)}
-                    className="w-full px-2.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Hari Tersisa</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={newCampDays}
-                    onChange={(e) => setNewCampDays(parseInt(e.target.value) || 30)}
-                    className="w-full px-2.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Kota / Lokasi Program</label>
-                <input
-                  type="text"
-                  value={newCampCity}
-                  onChange={(e) => setNewCampCity(e.target.value)}
-                  placeholder="Contoh: Kota Bogor, Jawa Barat"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              {/* Cover Image Upload / URL */}
-              <div className="space-y-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
-                  Foto Sampul Proyek
-                </label>
-                {newCampImage && (
-                  <img 
-                    src={newCampImage} 
-                    alt="Preview" 
-                    className="w-full h-28 object-cover rounded-xl border border-slate-200 dark:border-slate-700 mb-2" 
-                  />
-                )}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="URL gambar (https://...)"
-                    value={newCampImage}
-                    onChange={(e) => setNewCampImage(e.target.value)}
-                    className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs"
-                  />
-                  <label className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer flex items-center gap-1 shrink-0">
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Unggah File</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleCampaignImageUpload(e, setNewCampImage)}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Deskripsi & Cerita Proyek</label>
-                <textarea
-                  rows={3}
-                  value={newCampDesc}
-                  onChange={(e) => setNewCampDesc(e.target.value)}
-                  placeholder="Jelaskan latar belakang penerima manfaat dan tujuan penggalangan dana ini..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="urgent-check"
-                  checked={newCampUrgent}
-                  onChange={(e) => setNewCampUrgent(e.target.checked)}
-                  className="w-4 h-4 rounded text-rose-600 border-slate-300 focus:ring-rose-500 cursor-pointer"
-                />
-                <label htmlFor="urgent-check" className="font-semibold text-rose-600 dark:text-rose-400 cursor-pointer select-none">
-                  Tandai sebagai Program Mendesak (Badge Merah Urgent)
-                </label>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddCampaignModal(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white font-bold cursor-pointer shadow-md transition-all active:scale-98"
-                >
-                  Simpan & Terbitkan Proyek
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {/* ======================================================== */}
+      {/* 8. EDIT KATALOG DONASI                                   */}
+      {/* ======================================================== */}
+      {activeTab === 'campaigns' && (
+        <AdminDonationCatalogView 
+          campaigns={campaigns}
+          onGoCreateCampaign={() => {
+            setActiveTab('create_campaign');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+        />
       )}
 
-      {/* Modal: Edit Seluruh Data Proyek Donasi */}
-      {editingCampaign && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in overflow-y-auto">
-          <div className="w-full max-w-md bg-white dark:bg-slate-900 p-5 rounded-3xl space-y-3.5 text-xs shadow-2xl my-auto max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                <Pencil className="w-4 h-4 text-[#060ee3]" />
-                <span>Edit Proyek Donasi</span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => setEditingCampaign(null)}
-                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white rounded-lg cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveEditCampaign} className="space-y-3">
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Judul Proyek Donasi *</label>
-                <input
-                  type="text"
-                  required
-                  value={editCampTitle}
-                  onChange={(e) => setEditCampTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-bold"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Kategori Program</label>
-                  <select
-                    value={editCampCategory}
-                    onChange={(e) => setEditCampCategory(e.target.value as any)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
-                  >
-                    <option value="pendidikan">Pendidikan</option>
-                    <option value="yatim">Yatim & Dhuafa</option>
-                    <option value="bencana">Tanggap Bencana</option>
-                    <option value="kesehatan">Kesehatan</option>
-                    <option value="dakwah">Dakwah & Ibadah</option>
-                    <option value="ekonomi">Pemberdayaan Ekonomi</option>
-                    <option value="infrastruktur">Infrastruktur Sosial</option>
-                    <option value="kemanusiaan">Kemanusiaan</option>
-                    <option value="zakat">Zakat & Wakaf</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Target Donasi (Rp) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={editCampTarget}
-                    onChange={(e) => setEditCampTarget(parseInt(e.target.value) || 10000000)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold text-[#060ee3] dark:text-blue-400"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Dana Terkumpul (Rp)</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={editCampCollected}
-                    onChange={(e) => setEditCampCollected(parseInt(e.target.value) || 0)}
-                    className="w-full px-2.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Jumlah Donatur</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={editCampDonors}
-                    onChange={(e) => setEditCampDonors(parseInt(e.target.value) || 0)}
-                    className="w-full px-2.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Hari Tersisa</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={editCampDays}
-                    onChange={(e) => setEditCampDays(parseInt(e.target.value) || 0)}
-                    className="w-full px-2.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Kota / Lokasi Program</label>
-                <input
-                  type="text"
-                  value={editCampCity}
-                  onChange={(e) => setEditCampCity(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              {/* Cover Image Upload / URL */}
-              <div className="space-y-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
-                <label className="block font-semibold text-slate-700 dark:text-slate-300">
-                  Foto Sampul Proyek
-                </label>
-                {editCampImage && (
-                  <img 
-                    src={editCampImage} 
-                    alt="Preview" 
-                    className="w-full h-28 object-cover rounded-xl border border-slate-200 dark:border-slate-700 mb-2" 
-                  />
-                )}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="URL gambar (https://...)"
-                    value={editCampImage}
-                    onChange={(e) => setEditCampImage(e.target.value)}
-                    className="flex-1 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs"
-                  />
-                  <label className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold cursor-pointer flex items-center gap-1 shrink-0">
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Unggah File</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleCampaignImageUpload(e, setEditCampImage)}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Deskripsi & Cerita Proyek</label>
-                <textarea
-                  rows={3}
-                  value={editCampDesc}
-                  onChange={(e) => setEditCampDesc(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 pt-1">
-                <label className="flex items-center gap-2 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={editCampUrgent}
-                    onChange={(e) => setEditCampUrgent(e.target.checked)}
-                    className="w-4 h-4 rounded text-rose-600 border-slate-300 focus:ring-rose-500 cursor-pointer"
-                  />
-                  <span className="font-semibold text-rose-600 dark:text-rose-400">
-                    Mendesak (Urgent)
-                  </span>
-                </label>
-
-                <label className="flex items-center gap-2 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={editCampActive}
-                    onChange={(e) => setEditCampActive(e.target.checked)}
-                    className="w-4 h-4 rounded text-emerald-600 border-slate-300 focus:ring-emerald-500 cursor-pointer"
-                  />
-                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                    Status Aktif
-                  </span>
-                </label>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEditingCampaign(null)}
-                  className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-semibold cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white font-bold cursor-pointer shadow-md transition-all active:scale-98"
-                >
-                  Simpan Perubahan
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {/* ======================================================== */}
+      {/* 9. EDIT SYARAT & KETENTUAN HUKUM / PRIVASI               */}
+      {/* ======================================================== */}
+      {activeTab === 'legal_terms' && (
+        <AdminLegalTermsEditorView />
       )}
 
-      {/* Modal: Tambah Laporan Kegiatan */}
-      {showAddReportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in">
-          <div className="w-full max-w-sm bg-white dark:bg-slate-900 p-5 rounded-3xl space-y-3 text-xs shadow-2xl">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Publikasi Laporan Kegiatan Baru
-            </h3>
-
-            <form onSubmit={handleCreateReport} className="space-y-3">
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Judul Laporan *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Penyaluran Paket Nutrisi Balita"
-                  value={reportTitle}
-                  onChange={(e) => setReportTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Penerima (Jiwa)</label>
-                  <input
-                    type="number"
-                    value={reportBeneficiaries}
-                    onChange={(e) => setReportBeneficiaries(parseInt(e.target.value) || 100)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Total Dana (Rp)</label>
-                  <input
-                    type="number"
-                    value={reportBudget}
-                    onChange={(e) => setReportBudget(parseInt(e.target.value) || 5000000)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Lokasi Kegiatan</label>
-                <input
-                  type="text"
-                  value={reportLocation}
-                  onChange={(e) => setReportLocation(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddReportModal(false)}
-                  className="flex-1 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white font-bold cursor-pointer"
-                >
-                  Publikasikan
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {/* ======================================================== */}
+      {/* 10. EDIT FOOTER & PROFIL YAYASAN                         */}
+      {/* ======================================================== */}
+      {activeTab === 'footer' && (
+        <AdminFooterEditorView 
+          cmsConfig={formData}
+          onConfigSaved={(updated) => {
+            setFormData(updated);
+            setSavedSuccess(true);
+            setTimeout(() => setSavedSuccess(false), 2500);
+          }}
+        />
       )}
 
-      {/* Modal: Tambah Layanan Program Yayasan */}
-      {showAddServiceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in">
-          <div className="w-full max-w-sm bg-white dark:bg-slate-900 p-5 rounded-3xl space-y-3 text-xs shadow-2xl">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              Tambah Pilar Layanan Yayasan
-            </h3>
-
-            <form onSubmit={handleCreateService} className="space-y-3">
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Nama Layanan *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Pengobatan Gratis Keliling"
-                  value={serviceTitle}
-                  onChange={(e) => setServiceTitle(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Deskripsi Layanan</label>
-                <textarea
-                  rows={2}
-                  value={serviceDesc}
-                  onChange={(e) => setServiceDesc(e.target.value)}
-                  placeholder="Bantuan pemulihan kesehatan dan obat gratis bagi warga prasejahtera."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Target Penerima</label>
-                  <input
-                    type="text"
-                    value={serviceBeneficiaries}
-                    onChange={(e) => setServiceBeneficiaries(e.target.value)}
-                    placeholder="1.000+ Jiwa"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold mb-1 text-slate-700 dark:text-slate-300">Label Badge</label>
-                  <input
-                    type="text"
-                    value={serviceBadge}
-                    onChange={(e) => setServiceBadge(e.target.value)}
-                    placeholder="Program Utama"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddServiceModal(false)}
-                  className="flex-1 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 cursor-pointer"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white font-bold cursor-pointer"
-                >
-                  Simpan Layanan
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {/* ======================================================== */}
+      {/* 11. EDIT LOGO WEBSITE & SPLASH SCREEN                    */}
+      {/* ======================================================== */}
+      {activeTab === 'logos' && (
+        <AdminLogoEditorView 
+          cmsConfig={formData}
+          onConfigSaved={(updated) => {
+            setFormData(updated);
+            setSavedSuccess(true);
+            setTimeout(() => setSavedSuccess(false), 2500);
+          }}
+        />
       )}
 
       {/* Database Reset Tool */}

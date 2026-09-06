@@ -65,11 +65,35 @@ export const INITIAL_CMS_CONFIG: CmsConfig = {
   ],
   heroBannerTitle: "Ulurkan Tanganmu, Ciptakan Perubahan",
   heroBannerSubtitle: "Bukan seberapa besar yang kita beri, tapi seberapa tulus hati yang menyertai. Karena dari tangan yang sederhana, lahir perubahan yang luar biasa.",
+  footerDescription: "Lembaga filantropi nirlaba resmi berbadan hukum yang berdedikasi mengabdi untuk pendidikan yatim, kesehatan gratis, tanggap bencana, dan kemandirian dhuafa.",
+  footerCopyright: "Yayasan Prakarsa Hadji Abdul Muis. All rights reserved.",
+  sectionTitles: {
+    urgentProgramsTitle: "Bantuan Mendesak & Tanggap Darurat",
+    urgentProgramsSubtitle: "Program prioritas dengan urgensi tinggi yang membutuhkan uluran tangan kita segera",
+    catalogTitle: "Katalog Penggalangan Dana",
+    catalogSubtitle: "Pilih dan salurkan donasi terbaik Anda untuk program kemanusiaan yang terpercaya",
+    servicesTitle: "Pilar Layanan Sosial Yayasan",
+    servicesSubtitle: "Program pengabdian berkelanjutan untuk kesejahteraan dan kemandirian ummat",
+    transparencyTitle: "Laporan Transparansi Penyaluran",
+    transparencySubtitle: "Dokumentasi dan laporan pertanggungjawaban dana publik 100% akuntabel",
+    volunteersTitle: "Bergabung Menjadi Relawan Kebaikan",
+    volunteersSubtitle: "Jadilah bagian dari langkah nyata mengabdi dan membawa senyum bagi sesama"
+  },
+  customCategories: [
+    { id: "pendidikan", name: "Pendidikan & Beasiswa", iconName: "GraduationCap", description: "Beasiswa dan sarana belajar santri/siswa dhuafa" },
+    { id: "yatim", name: "Yatim & Dhuafa", iconName: "HeartHandshake", description: "Santunan, asrama, dan gizi anak-anak yatim" },
+    { id: "kesehatan", name: "Kesehatan & Medis", iconName: "Stethoscope", description: "Bantuan pengobatan darurat dan ambulans gratis" },
+    { id: "bencana", name: "Tanggap Bencana", iconName: "ShieldAlert", description: "Bantuan darurat logistik & pemulihan korban bencana" },
+    { id: "ekonomi", name: "Pemberdayaan Ekonomi", iconName: "Coins", description: "Modal usaha mikro dan kemandirian pangan umat" },
+    { id: "dakwah", name: "Dakwah & Sarana Ibadah", iconName: "Church", description: "Renovasi masjid dan sarana ibadah pelosok" }
+  ],
+  qrisMerchantName: "PARAMIS FOUNDATION",
+  qrisNmid: "ID102026198",
   bankAccounts: [
-    { bank: "Bank Syariah Indonesia (BSI)", accountNumber: "7188 9090 12", accountName: "Yayasan Prakarsa Hadji Abdul Muis" },
-    { bank: "Bank Central Asia (BCA)", accountNumber: "5420 891 002", accountName: "Yayasan Prakarsa Hadji Abdul Muis" },
-    { bank: "Bank Mandiri", accountNumber: "123 00 9871 2234", accountName: "Yayasan Hadji Abdul Muis Donasi" },
-    { bank: "Bank Rakyat Indonesia (BRI)", accountNumber: "0341 01 002931 538", accountName: "PARAMIS FOUNDATION" }
+    { bank: "Bank Syariah Indonesia (BSI)", accountNumber: "7188 9090 12", accountName: "Yayasan Prakarsa Hadji Abdul Muis", notes: "KCP Jakarta Pusat", isActive: true },
+    { bank: "Bank Central Asia (BCA)", accountNumber: "5420 891 002", accountName: "Yayasan Prakarsa Hadji Abdul Muis", notes: "KCU Thamrin", isActive: true },
+    { bank: "Bank Mandiri", accountNumber: "123 00 9871 2234", accountName: "Yayasan Hadji Abdul Muis Donasi", notes: "Cabang Sudirman", isActive: true },
+    { bank: "Bank Rakyat Indonesia (BRI)", accountNumber: "0341 01 002931 538", accountName: "PARAMIS FOUNDATION", notes: "Unit Veteran", isActive: true }
   ]
 };
 

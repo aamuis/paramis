@@ -22,6 +22,8 @@ import {
   INITIAL_CAMPAIGN_SUBMISSIONS
 } from '../data/initialData';
 
+import { LEGAL_ARTICLES, LegalArticle } from '../data/legalArticlesData';
+
 const STORAGE_KEYS = {
   CMS_CONFIG: 'paramis_cms_config_v4',
   SERVICES: 'paramis_services_v2',
@@ -31,7 +33,8 @@ const STORAGE_KEYS = {
   REPORTS: 'paramis_reports_v2',
   EMAIL_LOGS: 'paramis_email_logs_v2',
   SUBMISSIONS: 'paramis_campaign_submissions_v1',
-  DARK_MODE: 'paramis_dark_mode'
+  DARK_MODE: 'paramis_dark_mode',
+  LEGAL_ARTICLES: 'paramis_legal_articles_v1'
 };
 
 type Listener = () => void;
@@ -103,6 +106,32 @@ export function getCmsConfig(): CmsConfig {
     }
   } else {
     config.customMenuItems = INITIAL_CMS_CONFIG.customMenuItems;
+    changed = true;
+  }
+
+  if (!config.sectionTitles) {
+    config.sectionTitles = INITIAL_CMS_CONFIG.sectionTitles;
+    changed = true;
+  }
+
+  if (!config.customCategories || !Array.isArray(config.customCategories) || config.customCategories.length === 0) {
+    config.customCategories = INITIAL_CMS_CONFIG.customCategories;
+    changed = true;
+  }
+
+  if (!config.footerDescription) {
+    config.footerDescription = INITIAL_CMS_CONFIG.footerDescription;
+    changed = true;
+  }
+
+  if (!config.footerCopyright) {
+    config.footerCopyright = INITIAL_CMS_CONFIG.footerCopyright;
+    changed = true;
+  }
+
+  if (!config.qrisNmid) {
+    config.qrisNmid = INITIAL_CMS_CONFIG.qrisNmid;
+    config.qrisMerchantName = INITIAL_CMS_CONFIG.qrisMerchantName;
     changed = true;
   }
 
@@ -477,6 +506,47 @@ export function updateVolunteerStatus(id: string, status: VolunteerApplicant['st
   if (v) {
     v.status = status;
     saveToStorage(STORAGE_KEYS.VOLUNTEERS, volunteers);
+    notifySubscribers();
+  }
+}
+
+export function deleteVolunteer(id: string): void {
+  const volunteers = getVolunteers().filter(v => v.id !== id);
+  saveToStorage(STORAGE_KEYS.VOLUNTEERS, volunteers);
+  notifySubscribers();
+}
+
+export function batchApproveVolunteers(ids: string[]): void {
+  const volunteers = getVolunteers();
+  let changed = false;
+  volunteers.forEach(v => {
+    if (ids.includes(v.id)) {
+      v.status = 'approved';
+      changed = true;
+    }
+  });
+  if (changed) {
+    saveToStorage(STORAGE_KEYS.VOLUNTEERS, volunteers);
+    notifySubscribers();
+  }
+}
+
+// Legal Articles Management
+export function getLegalArticles(): LegalArticle[] {
+  return loadFromStorage<LegalArticle[]>(STORAGE_KEYS.LEGAL_ARTICLES, LEGAL_ARTICLES);
+}
+
+export function saveLegalArticles(articles: LegalArticle[]): void {
+  saveToStorage(STORAGE_KEYS.LEGAL_ARTICLES, articles);
+  notifySubscribers();
+}
+
+export function updateLegalArticle(id: string, updated: Partial<LegalArticle>): void {
+  const articles = getLegalArticles();
+  const idx = articles.findIndex(a => a.id === id);
+  if (idx !== -1) {
+    articles[idx] = { ...articles[idx], ...updated };
+    saveToStorage(STORAGE_KEYS.LEGAL_ARTICLES, articles);
     notifySubscribers();
   }
 }

@@ -22,7 +22,8 @@ import {
   Building2
 } from 'lucide-react';
 import { CmsConfig } from '../types';
-import { LEGAL_ARTICLES, LegalArticle } from '../data/legalArticlesData';
+import { LegalArticle } from '../data/legalArticlesData';
+import { getLegalArticles, subscribeToDatabase } from '../services/storage';
 
 interface LegalTermsViewProps {
   cmsConfig: CmsConfig;
@@ -35,12 +36,22 @@ export const LegalTermsView: React.FC<LegalTermsViewProps> = ({
   onBackToHome,
   initialArticleId
 }) => {
+  const [articles, setArticles] = useState<LegalArticle[]>(() => getLegalArticles());
+
+  useEffect(() => {
+    const unsubscribe = subscribeToDatabase(() => {
+      setArticles(getLegalArticles());
+    });
+    return unsubscribe;
+  }, []);
+
   // Current active article state (default to first article if not specified)
   const [selectedArticleId, setSelectedArticleId] = useState<string>(() => {
-    if (initialArticleId && LEGAL_ARTICLES.some(a => a.id === initialArticleId)) {
+    const currentArticles = getLegalArticles();
+    if (initialArticleId && currentArticles.some(a => a.id === initialArticleId)) {
       return initialArticleId;
     }
-    return LEGAL_ARTICLES[0].id;
+    return currentArticles[0]?.id || 'syarat-ketentuan';
   });
 
   // Dropdown open/close state
@@ -54,8 +65,8 @@ export const LegalTermsView: React.FC<LegalTermsViewProps> = ({
   const [isCopied, setIsCopied] = useState<boolean>(false);
 
   // Find active article
-  const currentArticleIndex = LEGAL_ARTICLES.findIndex(a => a.id === selectedArticleId);
-  const currentArticle: LegalArticle = LEGAL_ARTICLES[currentArticleIndex] || LEGAL_ARTICLES[0];
+  const currentArticleIndex = articles.findIndex(a => a.id === selectedArticleId);
+  const currentArticle: LegalArticle = articles[currentArticleIndex] || articles[0];
 
   // Close dropdown on click outside or escape key
   useEffect(() => {
@@ -89,13 +100,13 @@ export const LegalTermsView: React.FC<LegalTermsViewProps> = ({
   // Previous & Next Article Navigation
   const handlePrevArticle = () => {
     if (currentArticleIndex > 0) {
-      handleSelectArticle(LEGAL_ARTICLES[currentArticleIndex - 1].id);
+      handleSelectArticle(articles[currentArticleIndex - 1].id);
     }
   };
 
   const handleNextArticle = () => {
-    if (currentArticleIndex < LEGAL_ARTICLES.length - 1) {
-      handleSelectArticle(LEGAL_ARTICLES[currentArticleIndex + 1].id);
+    if (currentArticleIndex < articles.length - 1) {
+      handleSelectArticle(articles[currentArticleIndex + 1].id);
     }
   };
 
@@ -199,7 +210,7 @@ export const LegalTermsView: React.FC<LegalTermsViewProps> = ({
           <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
             <span>Pilih Dokumen Ketentuan</span>
             <span className="text-[10px] font-normal text-slate-400">
-              ({currentArticleIndex + 1} dari {LEGAL_ARTICLES.length})
+              ({currentArticleIndex + 1} dari {articles.length})
             </span>
           </label>
           <span className="text-[10px] text-[#060ee3] dark:text-blue-400 font-semibold">
@@ -252,11 +263,11 @@ export const LegalTermsView: React.FC<LegalTermsViewProps> = ({
               className="absolute top-full left-0 right-0 mt-2 z-50 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl p-2 space-y-1 max-h-96 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200"
             >
               <div className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-400 border-b border-slate-100 dark:border-slate-800 mb-1 flex justify-between items-center">
-                <span>Daftar 7 Dokumen Kebijakan & Ketentuan</span>
+                <span>Daftar {articles.length} Dokumen Kebijakan & Ketentuan</span>
                 <span className="text-[#060ee3] dark:text-blue-400">Klik untuk Buka</span>
               </div>
 
-              {LEGAL_ARTICLES.map((article, index) => {
+              {articles.map((article, index) => {
                 const isSelected = article.id === selectedArticleId;
                 return (
                   <button
@@ -310,7 +321,7 @@ export const LegalTermsView: React.FC<LegalTermsViewProps> = ({
             onChange={(e) => handleSelectArticle(e.target.value)}
             className="w-full text-xs py-2 px-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-[#060ee3]"
           >
-            {LEGAL_ARTICLES.map((article, idx) => (
+            {articles.map((article, idx) => (
               <option key={article.id} value={article.id}>
                 {idx + 1}. {article.title} ({article.categoryBadge})
               </option>
@@ -472,13 +483,13 @@ export const LegalTermsView: React.FC<LegalTermsViewProps> = ({
           </button>
 
           <span className="text-[10px] font-mono text-slate-400 px-2 shrink-0">
-            {currentArticleIndex + 1} / {LEGAL_ARTICLES.length}
+            {currentArticleIndex + 1} / {articles.length}
           </span>
 
           <button
             type="button"
             onClick={handleNextArticle}
-            disabled={currentArticleIndex === LEGAL_ARTICLES.length - 1}
+            disabled={currentArticleIndex === articles.length - 1}
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white text-xs font-bold shadow-xs disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             <span className="truncate">Selanjutnya</span>
