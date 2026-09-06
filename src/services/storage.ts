@@ -1,9 +1,9 @@
-import { 
-  DonationCampaign, 
-  SocialActivityReport, 
-  DonationTransaction, 
-  VolunteerApplicant, 
-  CmsConfig, 
+import {
+  DonationCampaign,
+  SocialActivityReport,
+  DonationTransaction,
+  VolunteerApplicant,
+  CmsConfig,
   ServiceItem,
   EmailNotificationLog,
   PaymentMethodType,
@@ -11,31 +11,44 @@ import {
   CampaignSubmission
 } from '../types';
 
-import { 
-  INITIAL_CMS_CONFIG, 
-  INITIAL_SERVICES, 
-  INITIAL_CAMPAIGNS, 
-  INITIAL_TRANSACTIONS, 
-  INITIAL_VOLUNTEERS, 
+import {
+  INITIAL_CMS_CONFIG,
+  INITIAL_SERVICES,
+  INITIAL_CAMPAIGNS,
+  INITIAL_TRANSACTIONS,
+  INITIAL_VOLUNTEERS,
   INITIAL_ACTIVITY_REPORTS,
   INITIAL_EMAIL_LOGS,
   INITIAL_CAMPAIGN_SUBMISSIONS
 } from '../data/initialData';
 
 import { LEGAL_ARTICLES, LegalArticle } from '../data/legalArticlesData';
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 
-const STORAGE_KEYS = {
-  CMS_CONFIG: 'paramis_cms_config_v4',
-  SERVICES: 'paramis_services_v2',
-  CAMPAIGNS: 'paramis_campaigns_v2',
-  TRANSACTIONS: 'paramis_transactions_v2',
-  VOLUNTEERS: 'paramis_volunteers_v2',
-  REPORTS: 'paramis_reports_v2',
-  EMAIL_LOGS: 'paramis_email_logs_v2',
-  SUBMISSIONS: 'paramis_campaign_submissions_v1',
-  DARK_MODE: 'paramis_dark_mode',
-  LEGAL_ARTICLES: 'paramis_legal_articles_v1'
-};
+// =====================================================================
+// Ini adalah versi storage.ts yang tersambung ke Supabase (Postgres asli),
+// menggantikan versi lama yang hanya menyimpan data di localStorage browser.
+//
+// Semua fungsi export di bawah (getCampaigns, addCampaign, dst) SENGAJA
+// dibuat dengan nama & bentuk yang sama seperti sebelumnya, supaya semua
+// komponen React yang sudah ada TIDAK perlu diubah sama sekali.
+//
+// Caranya: data disimpan di cache memori (`cache`) yang dibaca secara
+// instan (synchronous) oleh komponen, sementara di belakang layar setiap
+// perubahan langsung dikirim ke Supabase (async, "fire and forget") dan
+// saat aplikasi pertama kali dibuka, data terbaru diambil dari Supabase
+// lalu didorong ke semua komponen lewat subscribeToDatabase().
+// =====================================================================
+
+type TableName =
+  | 'services'
+  | 'campaigns'
+  | 'transactions'
+  | 'volunteers'
+  | 'reports'
+  | 'email_logs'
+  | 'submissions'
+  | 'legal_articles';
 
 type Listener = () => void;
 const listeners: Set<Listener> = new Set();
@@ -51,42 +64,135 @@ export function subscribeToDatabase(listener: Listener): () => void {
   };
 }
 
-// Helpers for safe storage
-function loadFromStorage<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return fallback;
-    return JSON.parse(raw);
-  } catch (err) {
-    console.error(`Error loading key ${key}:`, err);
-    return fallback;
+// Status koneksi database, bisa dipakai komponen untuk menampilkan indikator
+// "menyinkronkan..." bila diperlukan (opsional, tidak wajib dipakai).
+export let isDatabaseReady = false;
+export function onDatabaseReady(cb: () => void) {
+  if (isDatabaseReady) cb();
+  else {
+    const unsub = subscribeToDatabase(() => {
+      if (isDatabaseReady) {
+        cb();
+        unsub();
+      }
+    });
   }
 }
 
-function saveToStorage<T>(key: string, data: T): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(data));
-  } catch (err) {
-    console.error(`Error saving key ${key}:`, err);
+// ---------------------------------------------------------------------
+// Cache di memori. Diisi dengan data bawaan dulu supaya UI tidak blank,
+// lalu ditimpa dengan data asli dari Supabase begitu selesai dimuat.
+// ---------------------------------------------------------------------
+const cache = {
+  cmsConfig: INITIAL_CMS_CONFIG as CmsConfig,
+  services: INITIAL_SERVICES as ServiceItem[],
+  campaigns: INITIAL_CAMPAIGNS as DonationCampaign[],
+  transactions: INITIAL_TRANSACTIONS as DonationTransaction[],
+  volunteers: INITIAL_VOLUNTEERS as VolunteerApplicant[],
+  reports: INITIAL_ACTIVITY_REPORTS as SocialActivityReport[],
+  emailLogs: INITIAL_EMAIL_LOGS as EmailNotificationLog[],
+  submissions: INITIAL_CAMPAIGN_SUBMISSIONS as CampaignSubmission[],
+  legalArticles: LEGAL_ARTICLES as LegalArticle[]
+};
+
+// ---------------------------------------------------------------------
+// Helper generik untuk baca/tulis ke Supabase. Setiap tabel berbentuk
+// (id text primary key, data jsonb) supaya cocok dengan struktur data
+// TypeScript yang sudah ada tanpa perlu bikin puluhan kolom manual.
+// ---------------------------------------------------------------------
+async function fetchList<T>(table: TableName, order: 'asc' | 'desc'): Promise<T[]> {
+  const { data, error } = await supabase
+    .from(table)
+    .select('data')
+    .order('created_at', { ascending: order === 'asc' });
+  if (error) {
+    console.error(`[Supabase] Gagal memuat tabel "${table}":`, error.message);
+    return [];
+  }
+  return (data || []).map((row: { data: T }) => row.data);
+}
+
+async function upsertRow(table: TableName, id: string, data: unknown): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  const { error } = await supabase
+    .from(table)
+    .upsert({ id, data, updated_at: new Date().toISOString() });
+  if (error) {
+    console.error(`[Supabase] Gagal menyimpan ke "${table}" (id=${id}):`, error.message);
   }
 }
 
-// Getters
-export function getCmsConfig(): CmsConfig {
-  const config = loadFromStorage<CmsConfig>(STORAGE_KEYS.CMS_CONFIG, INITIAL_CMS_CONFIG);
+async function deleteRow(table: TableName, id: string): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  const { error } = await supabase.from(table).delete().eq('id', id);
+  if (error) {
+    console.error(`[Supabase] Gagal menghapus dari "${table}" (id=${id}):`, error.message);
+  }
+}
+
+// Mengganti seluruh isi satu tabel dengan list baru (dipakai oleh fungsi
+// saveServices/saveCampaigns/saveReports/importAllWebsiteData/dst).
+async function replaceTable(table: TableName, items: Array<{ id: string }>): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  const { data: existing, error: fetchErr } = await supabase.from(table).select('id');
+  if (fetchErr) {
+    console.error(`[Supabase] Gagal membaca daftar id "${table}":`, fetchErr.message);
+    return;
+  }
+  const existingIds = new Set((existing || []).map((r: { id: string }) => r.id));
+  const newIds = new Set(items.map(i => i.id));
+  const idsToDelete = [...existingIds].filter(id => !newIds.has(id));
+
+  if (idsToDelete.length > 0) {
+    const { error } = await supabase.from(table).delete().in('id', idsToDelete);
+    if (error) console.error(`[Supabase] Gagal membersihkan "${table}":`, error.message);
+  }
+  if (items.length > 0) {
+    const rows = items.map(item => ({
+      id: item.id,
+      data: item,
+      updated_at: new Date().toISOString()
+    }));
+    const { error } = await supabase.from(table).upsert(rows);
+    if (error) console.error(`[Supabase] Gagal menulis batch "${table}":`, error.message);
+  }
+}
+
+async function fetchCmsConfig(): Promise<CmsConfig | null> {
+  const { data, error } = await supabase
+    .from('cms_config')
+    .select('data')
+    .eq('id', 'main')
+    .maybeSingle();
+  if (error) {
+    console.error('[Supabase] Gagal memuat cms_config:', error.message);
+    return null;
+  }
+  return data ? (data.data as CmsConfig) : null;
+}
+
+async function persistCmsConfig(config: CmsConfig): Promise<void> {
+  if (!isSupabaseConfigured) return;
+  const { error } = await supabase
+    .from('cms_config')
+    .upsert({ id: 'main', data: config, updated_at: new Date().toISOString() });
+  if (error) console.error('[Supabase] Gagal menyimpan cms_config:', error.message);
+}
+
+// ---------------------------------------------------------------------
+// Migrasi/self-heal CmsConfig, dipindah dari getCmsConfig lama supaya
+// bisa dipakai ulang baik saat init maupun tiap kali getCmsConfig() dipanggil.
+// ---------------------------------------------------------------------
+function applyCmsMigrations(input: CmsConfig): { config: CmsConfig; changed: boolean } {
+  const config: CmsConfig = { ...input };
   let changed = false;
 
-  // Auto-migrate if previous default banner text is present
-  if (
-    config.heroBannerTitle === "Wujudkan Harapan, Salurkan Donasi Terbaik Anda" ||
-    !config.heroBannerTitle
-  ) {
+  if (config.heroBannerTitle === 'Wujudkan Harapan, Salurkan Donasi Terbaik Anda' || !config.heroBannerTitle) {
     config.heroBannerTitle = INITIAL_CMS_CONFIG.heroBannerTitle;
     config.heroBannerSubtitle = INITIAL_CMS_CONFIG.heroBannerSubtitle;
     changed = true;
   }
 
-  // Auto-migrate customMenuItems to ensure zakat calculator and terms are properly configured
   if (config.customMenuItems && Array.isArray(config.customMenuItems)) {
     const zakatMenu = config.customMenuItems.find(m => m.id === 'menu-zakat');
     if (zakatMenu && (zakatMenu.pathOrTab === 'donations' || zakatMenu.pathOrTab === '')) {
@@ -94,14 +200,17 @@ export function getCmsConfig(): CmsConfig {
       changed = true;
     }
     if (!config.customMenuItems.some(m => m.id === 'menu-terms' || m.pathOrTab === 'terms')) {
-      config.customMenuItems.push({
-        id: "menu-terms",
-        title: "Syarat & Ketentuan",
-        pathOrTab: "terms",
-        iconName: "FileText",
-        isExternal: false,
-        isActive: true
-      });
+      config.customMenuItems = [
+        ...config.customMenuItems,
+        {
+          id: 'menu-terms',
+          title: 'Syarat & Ketentuan',
+          pathOrTab: 'terms',
+          iconName: 'FileText',
+          isExternal: false,
+          isActive: true
+        }
+      ];
       changed = true;
     }
   } else {
@@ -135,109 +244,191 @@ export function getCmsConfig(): CmsConfig {
     changed = true;
   }
 
-  if (changed) {
-    saveToStorage(STORAGE_KEYS.CMS_CONFIG, config);
+  return { config, changed };
+}
+
+// ---------------------------------------------------------------------
+// Inisialisasi: ambil data asli dari Supabase begitu modul ini dimuat.
+// Kalau database masih kosong (baru dibuat), isi otomatis dengan data
+// bawaan aplikasi supaya website tidak tampil kosong.
+// ---------------------------------------------------------------------
+async function seedInitialData(): Promise<void> {
+  await Promise.all([
+    persistCmsConfig(INITIAL_CMS_CONFIG),
+    replaceTable('services', INITIAL_SERVICES),
+    replaceTable('campaigns', INITIAL_CAMPAIGNS),
+    replaceTable('transactions', INITIAL_TRANSACTIONS),
+    replaceTable('volunteers', INITIAL_VOLUNTEERS),
+    replaceTable('reports', INITIAL_ACTIVITY_REPORTS),
+    replaceTable('email_logs', INITIAL_EMAIL_LOGS),
+    replaceTable('submissions', INITIAL_CAMPAIGN_SUBMISSIONS),
+    replaceTable('legal_articles', LEGAL_ARTICLES)
+  ]);
+}
+
+async function initDatabase(): Promise<void> {
+  if (!isSupabaseConfigured) {
+    isDatabaseReady = true;
+    notifySubscribers();
+    return;
   }
 
-  return config;
+  try {
+    const [cmsConfig, services, campaigns, transactions, volunteers, reports, emailLogs, submissions, legalArticles] =
+      await Promise.all([
+        fetchCmsConfig(),
+        fetchList<ServiceItem>('services', 'asc'),
+        fetchList<DonationCampaign>('campaigns', 'desc'),
+        fetchList<DonationTransaction>('transactions', 'desc'),
+        fetchList<VolunteerApplicant>('volunteers', 'desc'),
+        fetchList<SocialActivityReport>('reports', 'desc'),
+        fetchList<EmailNotificationLog>('email_logs', 'desc'),
+        fetchList<CampaignSubmission>('submissions', 'desc'),
+        fetchList<LegalArticle>('legal_articles', 'asc')
+      ]);
+
+    const looksEmpty = !cmsConfig && services.length === 0 && campaigns.length === 0;
+
+    if (looksEmpty) {
+      console.info('[Supabase] Database masih kosong, mengisi data awal bawaan aplikasi...');
+      await seedInitialData();
+      // cache sudah berisi nilai INITIAL_* dari awal, tidak perlu diubah lagi
+    } else {
+      cache.cmsConfig = cmsConfig ? applyCmsMigrations(cmsConfig).config : INITIAL_CMS_CONFIG;
+      cache.services = services.length ? services : INITIAL_SERVICES;
+      cache.campaigns = campaigns;
+      cache.transactions = transactions;
+      cache.volunteers = volunteers;
+      cache.reports = reports;
+      cache.emailLogs = emailLogs;
+      cache.submissions = submissions;
+      cache.legalArticles = legalArticles.length ? legalArticles : LEGAL_ARTICLES;
+    }
+  } catch (err) {
+    console.error('[Supabase] Gagal memuat data dari database, memakai data sementara:', err);
+  } finally {
+    isDatabaseReady = true;
+    notifySubscribers();
+  }
+}
+
+// Jalankan sekali begitu modul ini pertama kali diimpor.
+initDatabase();
+
+// =====================================================================
+// GETTERS (synchronous, baca dari cache)
+// =====================================================================
+export function getCmsConfig(): CmsConfig {
+  const { config, changed } = applyCmsMigrations(cache.cmsConfig);
+  if (changed) {
+    cache.cmsConfig = config;
+    persistCmsConfig(config);
+  }
+  return cache.cmsConfig;
 }
 
 export function getServices(): ServiceItem[] {
-  return loadFromStorage<ServiceItem[]>(STORAGE_KEYS.SERVICES, INITIAL_SERVICES);
+  return cache.services;
 }
 
 export function getCampaigns(): DonationCampaign[] {
-  return loadFromStorage<DonationCampaign[]>(STORAGE_KEYS.CAMPAIGNS, INITIAL_CAMPAIGNS);
+  return cache.campaigns;
 }
 
 export function getTransactions(): DonationTransaction[] {
-  return loadFromStorage<DonationTransaction[]>(STORAGE_KEYS.TRANSACTIONS, INITIAL_TRANSACTIONS);
+  return cache.transactions;
 }
 
 export function getVolunteers(): VolunteerApplicant[] {
-  return loadFromStorage<VolunteerApplicant[]>(STORAGE_KEYS.VOLUNTEERS, INITIAL_VOLUNTEERS);
+  return cache.volunteers;
 }
 
 export function getActivityReports(): SocialActivityReport[] {
-  return loadFromStorage<SocialActivityReport[]>(STORAGE_KEYS.REPORTS, INITIAL_ACTIVITY_REPORTS);
+  return cache.reports;
 }
 
 export function getEmailLogs(): EmailNotificationLog[] {
-  return loadFromStorage<EmailNotificationLog[]>(STORAGE_KEYS.EMAIL_LOGS, INITIAL_EMAIL_LOGS);
+  return cache.emailLogs;
 }
 
-// Modifiers
+export function getCampaignSubmissions(): CampaignSubmission[] {
+  return cache.submissions;
+}
+
+export function getLegalArticles(): LegalArticle[] {
+  return cache.legalArticles;
+}
+
+// =====================================================================
+// MODIFIERS
+// =====================================================================
 export function updateCmsConfig(newConfig: Partial<CmsConfig>): CmsConfig {
-  const current = getCmsConfig();
-  const updated = { ...current, ...newConfig };
-  saveToStorage(STORAGE_KEYS.CMS_CONFIG, updated);
+  const updated = { ...cache.cmsConfig, ...newConfig };
+  cache.cmsConfig = updated;
   notifySubscribers();
+  persistCmsConfig(updated);
   return updated;
 }
 
 export function saveServices(services: ServiceItem[]): void {
-  saveToStorage(STORAGE_KEYS.SERVICES, services);
+  cache.services = services;
   notifySubscribers();
+  replaceTable('services', services);
 }
 
 export function updateService(id: string, updated: Partial<ServiceItem>): void {
-  const current = getServices();
-  const index = current.findIndex(s => s.id === id);
+  const index = cache.services.findIndex(s => s.id === id);
   if (index !== -1) {
-    current[index] = { ...current[index], ...updated };
-    saveToStorage(STORAGE_KEYS.SERVICES, current);
+    const next = [...cache.services];
+    next[index] = { ...next[index], ...updated };
+    cache.services = next;
     notifySubscribers();
+    upsertRow('services', id, next[index]);
   }
 }
 
 export function addService(serviceData: Omit<ServiceItem, 'id'>): ServiceItem {
-  const current = getServices();
-  const newService: ServiceItem = {
-    ...serviceData,
-    id: `srv-${Date.now()}`
-  };
-  current.push(newService);
-  saveToStorage(STORAGE_KEYS.SERVICES, current);
+  const newService: ServiceItem = { ...serviceData, id: `srv-${Date.now()}` };
+  cache.services = [...cache.services, newService];
   notifySubscribers();
+  upsertRow('services', newService.id, newService);
   return newService;
 }
 
 export function deleteService(id: string): void {
-  const current = getServices().filter(s => s.id !== id);
-  saveToStorage(STORAGE_KEYS.SERVICES, current);
+  cache.services = cache.services.filter(s => s.id !== id);
   notifySubscribers();
+  deleteRow('services', id);
 }
 
 export function addReport(reportData: Omit<SocialActivityReport, 'id'>): SocialActivityReport {
-  const reports = getActivityReports();
-  const newReport: SocialActivityReport = {
-    ...reportData,
-    id: `rep-${Date.now()}`
-  };
-  reports.unshift(newReport);
-  saveToStorage(STORAGE_KEYS.REPORTS, reports);
+  const newReport: SocialActivityReport = { ...reportData, id: `rep-${Date.now()}` };
+  cache.reports = [newReport, ...cache.reports];
   notifySubscribers();
+  upsertRow('reports', newReport.id, newReport);
   return newReport;
 }
 
 export function updateReport(id: string, data: Partial<SocialActivityReport>): void {
-  const reports = getActivityReports();
-  const index = reports.findIndex(r => r.id === id);
+  const index = cache.reports.findIndex(r => r.id === id);
   if (index !== -1) {
-    reports[index] = { ...reports[index], ...data };
-    saveToStorage(STORAGE_KEYS.REPORTS, reports);
+    const next = [...cache.reports];
+    next[index] = { ...next[index], ...data };
+    cache.reports = next;
     notifySubscribers();
+    upsertRow('reports', id, next[index]);
   }
 }
 
 export function deleteReport(id: string): void {
-  const reports = getActivityReports().filter(r => r.id !== id);
-  saveToStorage(STORAGE_KEYS.REPORTS, reports);
+  cache.reports = cache.reports.filter(r => r.id !== id);
   notifySubscribers();
+  deleteRow('reports', id);
 }
 
-export function addCampaign(campaignData: Omit<DonationCampaign, 'id' | 'collectedAmount' | 'donorCount' | 'updates' | 'transparencyReports'>): DonationCampaign {
-  const campaigns = getCampaigns();
+export function addCampaign(
+  campaignData: Omit<DonationCampaign, 'id' | 'collectedAmount' | 'donorCount' | 'updates' | 'transparencyReports'>
+): DonationCampaign {
   const newCampaign: DonationCampaign = {
     ...campaignData,
     id: `camp-${Date.now()}`,
@@ -247,26 +438,27 @@ export function addCampaign(campaignData: Omit<DonationCampaign, 'id' | 'collect
     transparencyReports: [],
     active: true
   };
-  campaigns.unshift(newCampaign);
-  saveToStorage(STORAGE_KEYS.CAMPAIGNS, campaigns);
+  cache.campaigns = [newCampaign, ...cache.campaigns];
   notifySubscribers();
+  upsertRow('campaigns', newCampaign.id, newCampaign);
   return newCampaign;
 }
 
 export function updateCampaign(id: string, data: Partial<DonationCampaign>): void {
-  const campaigns = getCampaigns();
-  const index = campaigns.findIndex(c => c.id === id);
+  const index = cache.campaigns.findIndex(c => c.id === id);
   if (index !== -1) {
-    campaigns[index] = { ...campaigns[index], ...data };
-    saveToStorage(STORAGE_KEYS.CAMPAIGNS, campaigns);
+    const next = [...cache.campaigns];
+    next[index] = { ...next[index], ...data };
+    cache.campaigns = next;
     notifySubscribers();
+    upsertRow('campaigns', id, next[index]);
   }
 }
 
 export function deleteCampaign(id: string): void {
-  const campaigns = getCampaigns().filter(c => c.id !== id);
-  saveToStorage(STORAGE_KEYS.CAMPAIGNS, campaigns);
+  cache.campaigns = cache.campaigns.filter(c => c.id !== id);
   notifySubscribers();
+  deleteRow('campaigns', id);
 }
 
 // Create & Process Donation Transaction
@@ -280,8 +472,7 @@ export function createDonationTransaction(input: {
   isAnonymous: boolean;
   prayerMessage: string;
 }): { transaction: DonationTransaction; paymentDetails: { code: string; label: string } } {
-  const campaigns = getCampaigns();
-  const campaign = campaigns.find(c => c.id === input.campaignId);
+  const campaign = cache.campaigns.find(c => c.id === input.campaignId);
   const campaignTitle = campaign ? campaign.title : 'Donasi Umum PARAMIS FOUNDATION';
 
   const uniqueCode = Math.floor(100 + Math.random() * 899);
@@ -292,7 +483,6 @@ export function createDonationTransaction(input: {
   const invoiceNumber = `INV/PRM/${dateStr}/${randomSuffix}`;
   const receiptNumber = `RCPT-${dateStr}-${randomSuffix}`;
 
-  // Generate payment code based on method
   let paymentCode = '';
   let paymentChannelName = '';
 
@@ -343,7 +533,7 @@ export function createDonationTransaction(input: {
     invoiceNumber,
     campaignId: input.campaignId,
     campaignTitle,
-    donorName: input.isAnonymous ? 'Hamba Allah' : (input.donorName || 'Hamba Allah'),
+    donorName: input.isAnonymous ? 'Hamba Allah' : input.donorName || 'Hamba Allah',
     donorEmail: input.donorEmail,
     donorPhone: input.donorPhone,
     amount: input.amount,
@@ -359,42 +549,44 @@ export function createDonationTransaction(input: {
     receiptNumber
   };
 
-  const transactions = getTransactions();
-  transactions.unshift(transaction);
-  saveToStorage(STORAGE_KEYS.TRANSACTIONS, transactions);
-
+  cache.transactions = [transaction, ...cache.transactions];
   notifySubscribers();
+  upsertRow('transactions', transaction.id, transaction);
 
   return {
     transaction,
-    paymentDetails: {
-      code: paymentCode,
-      label: paymentChannelName
-    }
+    paymentDetails: { code: paymentCode, label: paymentChannelName }
   };
 }
 
 // Auto-verify transaction (instant payment gateway simulation)
 export function verifyTransaction(transactionId: string): DonationTransaction | null {
-  const transactions = getTransactions();
-  const tx = transactions.find(t => t.id === transactionId);
-  if (!tx) return null;
+  const txIndex = cache.transactions.findIndex(t => t.id === transactionId);
+  if (txIndex === -1) return null;
 
-  tx.status = 'verified';
-  tx.verifiedAt = new Date().toISOString();
-  saveToStorage(STORAGE_KEYS.TRANSACTIONS, transactions);
+  const nextTransactions = [...cache.transactions];
+  const tx: DonationTransaction = {
+    ...nextTransactions[txIndex],
+    status: 'verified',
+    verifiedAt: new Date().toISOString()
+  };
+  nextTransactions[txIndex] = tx;
+  cache.transactions = nextTransactions;
+  upsertRow('transactions', tx.id, tx);
 
-  // Update campaign collected amount & donor count
-  const campaigns = getCampaigns();
-  const campaign = campaigns.find(c => c.id === tx.campaignId);
-  if (campaign) {
-    campaign.collectedAmount += tx.amount;
-    campaign.donorCount += 1;
-    saveToStorage(STORAGE_KEYS.CAMPAIGNS, campaigns);
+  const campIndex = cache.campaigns.findIndex(c => c.id === tx.campaignId);
+  if (campIndex !== -1) {
+    const nextCampaigns = [...cache.campaigns];
+    const campaign = {
+      ...nextCampaigns[campIndex],
+      collectedAmount: nextCampaigns[campIndex].collectedAmount + tx.amount,
+      donorCount: nextCampaigns[campIndex].donorCount + 1
+    };
+    nextCampaigns[campIndex] = campaign;
+    cache.campaigns = nextCampaigns;
+    upsertRow('campaigns', campaign.id, campaign);
   }
 
-  // Create automatic email notification log
-  const emailLogs = getEmailLogs();
   const newEmail: EmailNotificationLog = {
     id: `eml-${Date.now()}`,
     toEmail: tx.donorEmail,
@@ -406,8 +598,8 @@ export function verifyTransaction(transactionId: string): DonationTransaction | 
     contentSnippet: `Terima kasih Bapak/Ibu ${tx.donorName}. Donasi sebesar Rp ${tx.totalAmount.toLocaleString('id-ID')} untuk ${tx.campaignTitle} telah kami terima dan diverifikasi secara otomatis.`,
     period: new Date().toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
   };
-  emailLogs.unshift(newEmail);
-  saveToStorage(STORAGE_KEYS.EMAIL_LOGS, emailLogs);
+  cache.emailLogs = [newEmail, ...cache.emailLogs];
+  upsertRow('email_logs', newEmail.id, newEmail);
 
   notifySubscribers();
   return tx;
@@ -429,7 +621,6 @@ export function registerVolunteer(input: {
   let score = 0;
   const notes: string[] = [];
 
-  // Automated scoring criteria
   const cleanPhone = input.phone.replace(/\D/g, '');
   if (cleanPhone.length >= 10 && (cleanPhone.startsWith('08') || cleanPhone.startsWith('628'))) {
     score += 25;
@@ -474,17 +665,14 @@ export function registerVolunteer(input: {
     registeredAt: new Date().toISOString()
   };
 
-  const volunteers = getVolunteers();
-  volunteers.unshift(volunteer);
-  saveToStorage(STORAGE_KEYS.VOLUNTEERS, volunteers);
+  cache.volunteers = [volunteer, ...cache.volunteers];
+  upsertRow('volunteers', volunteer.id, volunteer);
 
-  // Auto-send welcome & verification email
-  const emailLogs = getEmailLogs();
-  emailLogs.unshift({
+  const newEmail: EmailNotificationLog = {
     id: `eml-${Date.now()}`,
     toEmail: volunteer.email,
     donorName: volunteer.fullName,
-    subject: passedAuto 
+    subject: passedAuto
       ? `Selamat! Verifikasi Otomatis Relawan PARAMIS Disetujui [No: ${idCardNumber}]`
       : `Konfirmasi Pendaftaran Relawan PARAMIS FOUNDATION`,
     type: 'volunteer_welcome',
@@ -493,81 +681,79 @@ export function registerVolunteer(input: {
     contentSnippet: passedAuto
       ? `Halo ${volunteer.fullName}, sistem verifikasi otomatis PARAMIS FOUNDATION telah menyetujui pendaftaran Anda dengan skor ${score}/100. Kartu E-KTA Relawan Anda siap digunakan.`
       : `Halo ${volunteer.fullName}, berkas Anda sedang ditinjau oleh Koordinator Relawan PARAMIS.`
-  });
-  saveToStorage(STORAGE_KEYS.EMAIL_LOGS, emailLogs);
+  };
+  cache.emailLogs = [newEmail, ...cache.emailLogs];
+  upsertRow('email_logs', newEmail.id, newEmail);
 
   notifySubscribers();
   return { volunteer, passedAutoVerification: passedAuto };
 }
 
 export function updateVolunteerStatus(id: string, status: VolunteerApplicant['status']): void {
-  const volunteers = getVolunteers();
-  const v = volunteers.find(item => item.id === id);
-  if (v) {
-    v.status = status;
-    saveToStorage(STORAGE_KEYS.VOLUNTEERS, volunteers);
+  const index = cache.volunteers.findIndex(v => v.id === id);
+  if (index !== -1) {
+    const next = [...cache.volunteers];
+    next[index] = { ...next[index], status };
+    cache.volunteers = next;
     notifySubscribers();
+    upsertRow('volunteers', id, next[index]);
   }
 }
 
 export function deleteVolunteer(id: string): void {
-  const volunteers = getVolunteers().filter(v => v.id !== id);
-  saveToStorage(STORAGE_KEYS.VOLUNTEERS, volunteers);
+  cache.volunteers = cache.volunteers.filter(v => v.id !== id);
   notifySubscribers();
+  deleteRow('volunteers', id);
 }
 
 export function batchApproveVolunteers(ids: string[]): void {
-  const volunteers = getVolunteers();
-  let changed = false;
-  volunteers.forEach(v => {
-    if (ids.includes(v.id)) {
-      v.status = 'approved';
-      changed = true;
-    }
-  });
-  if (changed) {
-    saveToStorage(STORAGE_KEYS.VOLUNTEERS, volunteers);
+  const next = cache.volunteers.map(v => (ids.includes(v.id) ? { ...v, status: 'approved' as const } : v));
+  const changedOnes = next.filter(v => ids.includes(v.id));
+  if (changedOnes.length > 0) {
+    cache.volunteers = next;
     notifySubscribers();
+    changedOnes.forEach(v => upsertRow('volunteers', v.id, v));
   }
 }
 
 // Legal Articles Management
-export function getLegalArticles(): LegalArticle[] {
-  return loadFromStorage<LegalArticle[]>(STORAGE_KEYS.LEGAL_ARTICLES, LEGAL_ARTICLES);
-}
-
 export function saveLegalArticles(articles: LegalArticle[]): void {
-  saveToStorage(STORAGE_KEYS.LEGAL_ARTICLES, articles);
+  cache.legalArticles = articles;
   notifySubscribers();
+  replaceTable('legal_articles', articles);
 }
 
 export function updateLegalArticle(id: string, updated: Partial<LegalArticle>): void {
-  const articles = getLegalArticles();
-  const idx = articles.findIndex(a => a.id === id);
-  if (idx !== -1) {
-    articles[idx] = { ...articles[idx], ...updated };
-    saveToStorage(STORAGE_KEYS.LEGAL_ARTICLES, articles);
+  const index = cache.legalArticles.findIndex(a => a.id === id);
+  if (index !== -1) {
+    const next = [...cache.legalArticles];
+    next[index] = { ...next[index], ...updated };
+    cache.legalArticles = next;
     notifySubscribers();
+    upsertRow('legal_articles', id, next[index]);
   }
 }
 
-// Add Activity Report
+// Add Activity Report (variant used by admin publish flow)
 export function addActivityReport(report: Omit<SocialActivityReport, 'id' | 'publishedAt'>): SocialActivityReport {
-  const reports = getActivityReports();
   const newReport: SocialActivityReport = {
     ...report,
     id: `rep-${Date.now()}`,
     publishedAt: new Date().toISOString()
   };
-  reports.unshift(newReport);
-  saveToStorage(STORAGE_KEYS.REPORTS, reports);
+  cache.reports = [newReport, ...cache.reports];
   notifySubscribers();
+  upsertRow('reports', newReport.id, newReport);
   return newReport;
 }
 
 // Send periodic report email to donors
-export function sendPeriodicReportEmail(recipientEmail: string, recipientName: string, periodText: string, customMessage?: string): EmailNotificationLog {
-  const emailLogs = getEmailLogs();
+export function sendPeriodicReportEmail(
+  recipientEmail: string,
+  recipientName: string,
+  periodText: string,
+  customMessage?: string
+): EmailNotificationLog {
   const newEmail: EmailNotificationLog = {
     id: `eml-${Date.now()}`,
     toEmail: recipientEmail,
@@ -576,33 +762,28 @@ export function sendPeriodicReportEmail(recipientEmail: string, recipientName: s
     type: 'monthly_report',
     sentAt: new Date().toISOString(),
     status: 'delivered',
-    contentSnippet: customMessage || `Laporan audit penyaluran donasi Yayasan Prakarsa Hadji Abdul Muis periode ${periodText}. 100% donasi disalurkan amanah dan terdokumentasi.`,
+    contentSnippet:
+      customMessage ||
+      `Laporan audit penyaluran donasi Yayasan Prakarsa Hadji Abdul Muis periode ${periodText}. 100% donasi disalurkan amanah dan terdokumentasi.`,
     period: periodText
   };
-  emailLogs.unshift(newEmail);
-  saveToStorage(STORAGE_KEYS.EMAIL_LOGS, emailLogs);
+  cache.emailLogs = [newEmail, ...cache.emailLogs];
   notifySubscribers();
+  upsertRow('email_logs', newEmail.id, newEmail);
   return newEmail;
 }
 
 // Campaign Submissions (Galang Dana dari Pengunjung - Tanpa Buat Akun)
-export function getCampaignSubmissions(): CampaignSubmission[] {
-  return loadFromStorage<CampaignSubmission[]>(STORAGE_KEYS.SUBMISSIONS, INITIAL_CAMPAIGN_SUBMISSIONS);
-}
-
-export function addCampaignSubmission(
-  data: Omit<CampaignSubmission, 'id' | 'status' | 'submittedAt'>
-): CampaignSubmission {
-  const submissions = getCampaignSubmissions();
+export function addCampaignSubmission(data: Omit<CampaignSubmission, 'id' | 'status' | 'submittedAt'>): CampaignSubmission {
   const newSubmission: CampaignSubmission = {
     ...data,
     id: `sub-${Date.now()}`,
     status: 'pending',
     submittedAt: new Date().toISOString()
   };
-  submissions.unshift(newSubmission);
-  saveToStorage(STORAGE_KEYS.SUBMISSIONS, submissions);
+  cache.submissions = [newSubmission, ...cache.submissions];
   notifySubscribers();
+  upsertRow('submissions', newSubmission.id, newSubmission);
   return newSubmission;
 }
 
@@ -610,16 +791,13 @@ export function approveCampaignSubmission(
   id: string,
   notes?: string
 ): { submission: CampaignSubmission; campaign?: DonationCampaign } {
-  const submissions = getCampaignSubmissions();
-  const subIndex = submissions.findIndex(s => s.id === id);
+  const subIndex = cache.submissions.findIndex(s => s.id === id);
   if (subIndex === -1) {
     throw new Error('Pengajuan donasi tidak ditemukan');
   }
 
-  const sub = submissions[subIndex];
-  
-  // Create official active DonationCampaign from this submission
-  const campaigns = getCampaigns();
+  const sub = cache.submissions[subIndex];
+
   const newCampaignId = `camp-acc-${Date.now()}`;
   const slug = sub.title
     .toLowerCase()
@@ -657,7 +835,7 @@ export function approveCampaignSubmission(
       {
         id: `upd-${Date.now()}`,
         date: new Date().toISOString().slice(0, 10),
-        title: "Program Galang Dana Resmi Disetujui",
+        title: 'Program Galang Dana Resmi Disetujui',
         description: `Pengajuan galang dana telah diverifikasi dan disetujui oleh Tim Pengelola PARAMIS FOUNDATION. Amanah donatur siap disalurkan kepada ${sub.applicantName}.`
       }
     ],
@@ -665,10 +843,9 @@ export function approveCampaignSubmission(
     active: true
   };
 
-  campaigns.unshift(newCampaign);
-  saveToStorage(STORAGE_KEYS.CAMPAIGNS, campaigns);
+  cache.campaigns = [newCampaign, ...cache.campaigns];
+  upsertRow('campaigns', newCampaign.id, newCampaign);
 
-  // Update submission record
   const updatedSubmission: CampaignSubmission = {
     ...sub,
     status: 'approved',
@@ -676,47 +853,52 @@ export function approveCampaignSubmission(
     adminNotes: notes || 'Telah diverifikasi dan disetujui oleh Admin PARAMIS',
     createdCampaignId: newCampaignId
   };
-  submissions[subIndex] = updatedSubmission;
-  saveToStorage(STORAGE_KEYS.SUBMISSIONS, submissions);
+  const nextSubmissions = [...cache.submissions];
+  nextSubmissions[subIndex] = updatedSubmission;
+  cache.submissions = nextSubmissions;
+  upsertRow('submissions', updatedSubmission.id, updatedSubmission);
 
   notifySubscribers();
   return { submission: updatedSubmission, campaign: newCampaign };
 }
 
 export function rejectCampaignSubmission(id: string, reason?: string): CampaignSubmission {
-  const submissions = getCampaignSubmissions();
-  const subIndex = submissions.findIndex(s => s.id === id);
+  const subIndex = cache.submissions.findIndex(s => s.id === id);
   if (subIndex === -1) {
     throw new Error('Pengajuan donasi tidak ditemukan');
   }
 
   const updated: CampaignSubmission = {
-    ...submissions[subIndex],
+    ...cache.submissions[subIndex],
     status: 'rejected',
     reviewedAt: new Date().toISOString(),
     rejectionReason: reason || 'Dokumen belum lengkap atau tidak memenuhi kriteria verifikasi yayasan.'
   };
 
-  submissions[subIndex] = updated;
-  saveToStorage(STORAGE_KEYS.SUBMISSIONS, submissions);
+  const next = [...cache.submissions];
+  next[subIndex] = updated;
+  cache.submissions = next;
   notifySubscribers();
+  upsertRow('submissions', updated.id, updated);
   return updated;
 }
 
 export function deleteCampaignSubmission(id: string): void {
-  const submissions = getCampaignSubmissions().filter(s => s.id !== id);
-  saveToStorage(STORAGE_KEYS.SUBMISSIONS, submissions);
+  cache.submissions = cache.submissions.filter(s => s.id !== id);
   notifySubscribers();
+  deleteRow('submissions', id);
 }
 
 export function saveCampaigns(campaigns: DonationCampaign[]): void {
-  saveToStorage(STORAGE_KEYS.CAMPAIGNS, campaigns);
+  cache.campaigns = campaigns;
   notifySubscribers();
+  replaceTable('campaigns', campaigns);
 }
 
 export function saveReports(reports: SocialActivityReport[]): void {
-  saveToStorage(STORAGE_KEYS.REPORTS, reports);
+  cache.reports = reports;
   notifySubscribers();
+  replaceTable('reports', reports);
 }
 
 export function exportAllWebsiteData(): string {
@@ -727,37 +909,63 @@ export function exportAllWebsiteData(): string {
     services: getServices(),
     reports: getActivityReports(),
     volunteers: getVolunteers(),
-    submissions: getCampaignSubmissions(),
+    submissions: getCampaignSubmissions()
   };
   return JSON.stringify(data, null, 2);
 }
 
-export function importAllWebsiteData(jsonString: string): { success: boolean; message: string } {
+// PENTING: fungsi ini sekarang mengembalikan Promise karena benar-benar
+// menulis ke database Supabase (bukan localStorage lagi). Ini juga fungsi
+// yang dipakai untuk MEMINDAHKAN data lama (hasil export dari versi
+// localStorage) ke database yang baru — lihat README-SUPABASE.md.
+export async function importAllWebsiteData(jsonString: string): Promise<{ success: boolean; message: string }> {
   try {
     const data = JSON.parse(jsonString);
-    if (data.cmsConfig) saveToStorage(STORAGE_KEYS.CMS_CONFIG, data.cmsConfig);
-    if (data.campaigns) saveToStorage(STORAGE_KEYS.CAMPAIGNS, data.campaigns);
-    if (data.services) saveToStorage(STORAGE_KEYS.SERVICES, data.services);
-    if (data.reports) saveToStorage(STORAGE_KEYS.REPORTS, data.reports);
-    if (data.volunteers) saveToStorage(STORAGE_KEYS.VOLUNTEERS, data.volunteers);
-    if (data.submissions) saveToStorage(STORAGE_KEYS.SUBMISSIONS, data.submissions);
+    const tasks: Promise<void>[] = [];
+
+    if (data.cmsConfig) {
+      cache.cmsConfig = data.cmsConfig;
+      tasks.push(persistCmsConfig(data.cmsConfig));
+    }
+    if (data.campaigns) {
+      cache.campaigns = data.campaigns;
+      tasks.push(replaceTable('campaigns', data.campaigns));
+    }
+    if (data.services) {
+      cache.services = data.services;
+      tasks.push(replaceTable('services', data.services));
+    }
+    if (data.reports) {
+      cache.reports = data.reports;
+      tasks.push(replaceTable('reports', data.reports));
+    }
+    if (data.volunteers) {
+      cache.volunteers = data.volunteers;
+      tasks.push(replaceTable('volunteers', data.volunteers));
+    }
+    if (data.submissions) {
+      cache.submissions = data.submissions;
+      tasks.push(replaceTable('submissions', data.submissions));
+    }
+
+    await Promise.all(tasks);
     notifySubscribers();
-    return { success: true, message: 'Seluruh data dan file website berhasil diperbarui!' };
+    return { success: true, message: 'Seluruh data dan file website berhasil dipindahkan ke database!' };
   } catch (err) {
     return { success: false, message: 'Format file JSON tidak valid: ' + (err as Error).message };
   }
 }
 
 // Reset data helper
-export function resetDatabase(): void {
-  saveToStorage(STORAGE_KEYS.CMS_CONFIG, INITIAL_CMS_CONFIG);
-  saveToStorage(STORAGE_KEYS.SERVICES, INITIAL_SERVICES);
-  saveToStorage(STORAGE_KEYS.CAMPAIGNS, INITIAL_CAMPAIGNS);
-  saveToStorage(STORAGE_KEYS.TRANSACTIONS, INITIAL_TRANSACTIONS);
-  saveToStorage(STORAGE_KEYS.VOLUNTEERS, INITIAL_VOLUNTEERS);
-  saveToStorage(STORAGE_KEYS.REPORTS, INITIAL_ACTIVITY_REPORTS);
-  saveToStorage(STORAGE_KEYS.EMAIL_LOGS, INITIAL_EMAIL_LOGS);
-  saveToStorage(STORAGE_KEYS.SUBMISSIONS, INITIAL_CAMPAIGN_SUBMISSIONS);
+export async function resetDatabase(): Promise<void> {
+  cache.cmsConfig = INITIAL_CMS_CONFIG;
+  cache.services = INITIAL_SERVICES;
+  cache.campaigns = INITIAL_CAMPAIGNS;
+  cache.transactions = INITIAL_TRANSACTIONS;
+  cache.volunteers = INITIAL_VOLUNTEERS;
+  cache.reports = INITIAL_ACTIVITY_REPORTS;
+  cache.emailLogs = INITIAL_EMAIL_LOGS;
+  cache.submissions = INITIAL_CAMPAIGN_SUBMISSIONS;
   notifySubscribers();
+  await seedInitialData();
 }
-

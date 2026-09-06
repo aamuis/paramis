@@ -178,10 +178,11 @@ export const AdminWebsiteFileEditor: React.FC<AdminWebsiteFileEditorProps> = ({
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const content = event.target?.result as string;
       if (content) {
-        const res = importAllWebsiteData(content);
+        showToast('Menyimpan data ke database...');
+        const res = await importAllWebsiteData(content);
         if (res.success) {
           showToast(res.message);
           setRawText(getRawContent(selectedFile));
