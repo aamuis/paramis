@@ -18,10 +18,13 @@ import {
   AlertCircle,
   ExternalLink,
   UserCheck,
-  RotateCcw
+  RotateCcw,
+  IdCard,
+  X
 } from 'lucide-react';
 import { VolunteerApplicant } from '../../types';
-import { updateVolunteerStatus, deleteVolunteer, batchApproveVolunteers } from '../../services/storage';
+import { updateVolunteerStatus, deleteVolunteer, batchApproveVolunteers, updateVolunteerAvatar } from '../../services/storage';
+import { VolunteerKtaCard } from '../VolunteerKtaCard';
 
 interface AdminVolunteerAccViewProps {
   volunteers: VolunteerApplicant[];
@@ -264,15 +267,29 @@ export const AdminVolunteerAccView: React.FC<AdminVolunteerAccViewProps> = ({
                 {/* Top Row: Name, Score, Status */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-3">
-                    <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0 ${
-                      isApproved 
-                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200' 
-                        : isRejected 
-                        ? 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200' 
-                        : 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200'
-                    }`}>
-                      {vol.fullName.slice(0, 2).toUpperCase()}
-                    </div>
+                    {vol.avatarUrl ? (
+                      <img 
+                        src={vol.avatarUrl} 
+                        alt={vol.fullName}
+                        className="w-11 h-11 rounded-2xl object-cover shrink-0 border border-slate-200 dark:border-slate-700 shadow-xs cursor-pointer hover:scale-105 transition-transform"
+                        onClick={() => setSelectedVolunteer(vol)}
+                        title="Klik untuk lihat Kartu E-KTA"
+                      />
+                    ) : (
+                      <div 
+                        onClick={() => setSelectedVolunteer(vol)}
+                        className={`w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-sm shrink-0 cursor-pointer hover:scale-105 transition-transform ${
+                          isApproved 
+                            ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 border border-emerald-200' 
+                            : isRejected 
+                            ? 'bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200' 
+                            : 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-200'
+                        }`}
+                        title="Klik untuk lihat Kartu E-KTA"
+                      >
+                        {vol.fullName.slice(0, 2).toUpperCase()}
+                      </div>
+                    )}
 
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
@@ -407,6 +424,17 @@ export const AdminVolunteerAccView: React.FC<AdminVolunteerAccViewProps> = ({
 
                   {/* ACC Decision Controls */}
                   <div className="flex items-center gap-1.5 flex-wrap">
+                    {/* View E-KTA Button */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedVolunteer(vol)}
+                      className="px-2.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-[#060ee3] dark:text-blue-300 font-semibold text-xs border border-blue-200 dark:border-blue-800 transition-all cursor-pointer flex items-center gap-1 active:scale-95"
+                      title="Lihat & Cetak Kartu Tanda Anggota (E-KTA)"
+                    >
+                      <IdCard className="w-3.5 h-3.5" />
+                      <span>E-KTA</span>
+                    </button>
+
                     {!isApproved && (
                       <button
                         type="button"
@@ -456,6 +484,49 @@ export const AdminVolunteerAccView: React.FC<AdminVolunteerAccViewProps> = ({
           })
         )}
       </div>
+
+      {/* Modal Preview E-KTA Relawan */}
+      {selectedVolunteer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
+          <div className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <IdCard className="w-5 h-5 text-[#060ee3]" />
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Kartu Tanda Anggota (E-KTA) Relawan
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedVolunteer(null)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <VolunteerKtaCard 
+              volunteer={selectedVolunteer}
+              allowEditPhoto={true}
+              onAvatarUpdated={(newAvatar) => {
+                updateVolunteerAvatar(selectedVolunteer.id, newAvatar);
+                setSelectedVolunteer({ ...selectedVolunteer, avatarUrl: newAvatar });
+                onRefresh?.();
+              }}
+            />
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setSelectedVolunteer(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 text-xs font-bold cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

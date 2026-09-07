@@ -216,6 +216,10 @@ export interface CmsConfig {
   qrisImageUrl?: string;
   qrisMerchantName?: string;
   qrisNmid?: string;
+  qrisGatewayProvider?: 'manual' | 'midtrans' | 'xendit' | 'tripay' | 'duitku';
+  qrisGatewayApiKey?: string;
+  qrisGatewayMode?: 'sandbox' | 'production';
+  qrisGatewayEndpoint?: string;
   bankAccounts: Array<{
     bank: string;
     accountNumber: string;

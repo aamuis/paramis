@@ -13,7 +13,8 @@ import {
   DonationCampaign, 
   CampaignCategory, 
   DonationTransaction,
-  CustomMenuItem
+  CustomMenuItem,
+  VolunteerApplicant
 } from './types';
 import { SplashScreen } from './components/SplashScreen';
 import { Header } from './components/Header';
@@ -24,6 +25,7 @@ import { CampaignList } from './components/CampaignList';
 import { AboutFoundation } from './components/AboutFoundation';
 import { DonationModal } from './components/DonationModal';
 import { VolunteerModal } from './components/VolunteerModal';
+import { VolunteerKtaCard } from './components/VolunteerKtaCard';
 import { EmailNotificationModal } from './components/EmailNotificationModal';
 import { TransparencyModal } from './components/TransparencyModal';
 import { AdminDashboard } from './components/AdminDashboard';
@@ -83,6 +85,7 @@ export function App() {
   const [isTransparencyModalOpen, setIsTransparencyModalOpen] = useState(false);
   const [isZakatCalculatorOpen, setIsZakatCalculatorOpen] = useState(false);
   const [isAmbulanceModalOpen, setIsAmbulanceModalOpen] = useState(false);
+  const [selectedVolunteerKta, setSelectedVolunteerKta] = useState<VolunteerApplicant | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
 
   // Secret Admin Authentication State (Only owner knows PIN / secret triggers)
@@ -565,7 +568,7 @@ export function App() {
             </div>
           )}
 
-          {/* TAB: RELAWAN (VOLUNTEER MANAGEMENT & AUTOMATIC VERIFICATION) */}
+          {/* TAB: RELAWAN (VOLUNTEER MANAGEMENT & ADMIN ACC VERIFICATION) */}
           {activeTab === 'volunteers' && (
             <div className="space-y-4 animate-in fade-in duration-300">
               {/* Volunteer Hero Card */}
@@ -577,7 +580,7 @@ export function App() {
                   Bergabung Menjadi Relawan Kemanusiaan
                 </h2>
                 <p className="text-xs text-blue-100 leading-relaxed">
-                  Jadilah garda terdepan aksi sosial. Sistem verifikasi otomatis PARAMIS akan menilai kualifikasi Anda dan menerbitkan E-KTA resmi seketika.
+                  Jadilah garda terdepan aksi sosial kemanusiaan. Daftarkan diri Anda, upload foto profil, dan tim Admin Yayasan Prakarsa Hadji Abdul Muis akan meninjau dan meng-ACC penerbitan E-KTA resmi Anda.
                 </p>
 
                 <button
@@ -586,50 +589,75 @@ export function App() {
                   className="w-full py-2.5 px-3 rounded-xl bg-white text-[#060ee3] font-bold text-xs shadow-sm hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <Users className="w-4 h-4" />
-                  <span>Daftar Relawan Sekarang (Verifikasi Otomatis)</span>
+                  <span>Daftar Relawan Sekarang (Proses ACC Admin)</span>
                 </button>
               </div>
 
               {/* Active Verified Volunteers List */}
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between text-xs px-1">
-                  <h3 className="font-bold text-slate-900 dark:text-white">
-                    Relawan Terverifikasi ({volunteers.length})
-                  </h3>
-                  <span className="text-[10px] text-emerald-600 font-semibold">
-                    Siaga Penugasan
-                  </span>
-                </div>
-
-                {volunteers.map((v) => (
-                  <div
-                    key={v.id}
-                    className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between gap-3 text-xs"
-                  >
-                    <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 text-[#060ee3] dark:text-blue-300 font-bold flex items-center justify-center shrink-0">
-                      {v.fullName.slice(0, 2).toUpperCase()}
+              {(() => {
+                const approvedVolunteers = volunteers.filter(v => v.status === 'approved' || v.status === 'verified_auto');
+                return (
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between text-xs px-1">
+                      <h3 className="font-bold text-slate-900 dark:text-white">
+                        Relawan Resmi Terverifikasi ({approvedVolunteers.length})
+                      </h3>
+                      <span className="text-[10px] text-emerald-600 font-semibold">
+                        Siaga Penugasan
+                      </span>
                     </div>
 
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <h5 className="font-bold text-slate-900 dark:text-white truncate">
-                          {v.fullName}
-                        </h5>
-                        <span className="text-[9px] px-1.5 py-0.2 rounded-sm bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold">
-                          {v.verificationScore} pts
-                        </span>
+                    {approvedVolunteers.length === 0 ? (
+                      <div className="p-6 text-center rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 text-xs">
+                        Belum ada relawan yang berstatus ACC aktif. Daftarkan diri Anda dan tunggu persetujuan Admin Yayasan.
                       </div>
-                      <p className="text-[10px] text-slate-500 truncate">
-                        {v.profession} • {v.city}
-                      </p>
-                    </div>
+                    ) : (
+                      approvedVolunteers.map((v) => (
+                        <div
+                          key={v.id}
+                          onClick={() => setSelectedVolunteerKta(v)}
+                          className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between gap-3 text-xs cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-all group"
+                        >
+                          {v.avatarUrl ? (
+                            <img 
+                              src={v.avatarUrl} 
+                              alt={v.fullName} 
+                              className="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-200 dark:border-slate-700 group-hover:scale-105 transition-transform" 
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 text-[#060ee3] dark:text-blue-300 font-bold flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                              {v.fullName.slice(0, 2).toUpperCase()}
+                            </div>
+                          )}
 
-                    <span className="text-[9px] font-mono text-slate-400 shrink-0">
-                      {v.idCardNumber}
-                    </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <h5 className="font-bold text-slate-900 dark:text-white truncate">
+                                {v.fullName}
+                              </h5>
+                              <span className="text-[9px] px-1.5 py-0.2 rounded-sm bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold">
+                                RESMI ACC
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-slate-500 truncate">
+                              {v.profession} • {v.city}
+                            </p>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className="text-[9px] font-mono text-slate-400 block">
+                              {v.idCardNumber}
+                            </span>
+                            <span className="text-[10px] text-[#060ee3] dark:text-blue-400 font-medium group-hover:underline">
+                              Lihat KTA →
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
             </div>
           )}
 
@@ -801,6 +829,7 @@ export function App() {
           isOpen={isDonationModalOpen}
           onClose={() => setIsDonationModalOpen(false)}
           campaign={selectedCampaignForDonation}
+          cmsConfig={cmsConfig}
         />
 
         <VolunteerModal 
@@ -808,6 +837,41 @@ export function App() {
           onClose={() => setIsVolunteerModalOpen(false)}
           defaultCategory={selectedCategory !== 'semua' ? selectedCategory : 'bencana'}
         />
+
+        {/* E-KTA Detail Modal for Public / Active Volunteer */}
+        {selectedVolunteerKta && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
+            <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  Kartu Tanda Anggota (E-KTA) Relawan
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setSelectedVolunteerKta(null)}
+                  className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <VolunteerKtaCard 
+                volunteer={selectedVolunteerKta}
+                allowEditPhoto={false}
+              />
+
+              <div className="pt-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => setSelectedVolunteerKta(null)}
+                  className="w-full py-2.5 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white text-xs font-bold transition-all cursor-pointer"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <EmailNotificationModal 
           isOpen={isEmailModalOpen}

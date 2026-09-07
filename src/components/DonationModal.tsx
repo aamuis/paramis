@@ -13,17 +13,20 @@ import {
   Download, 
   Sparkles,
   ShieldCheck,
-  ArrowLeft
+  ArrowLeft,
+  Clock
 } from 'lucide-react';
-import { DonationCampaign, PaymentMethodType, DonationTransaction } from '../types';
-import { createDonationTransaction, verifyTransaction } from '../services/storage';
+import { DonationCampaign, PaymentMethodType, DonationTransaction, CmsConfig } from '../types';
+import { createDonationTransaction, verifyTransaction, getCmsConfig } from '../services/storage';
 import { ParamisLogo } from './ParamisLogo';
+import { QrisDisplay } from './QrisDisplay';
 
 interface DonationModalProps {
   isOpen: boolean;
   onClose: () => void;
   campaign?: DonationCampaign | null;
   onDonationCompleted?: (transaction: DonationTransaction) => void;
+  cmsConfig?: CmsConfig;
 }
 
 const PRESET_AMOUNTS = [25000, 50000, 100000, 250000, 500000, 1000000];
@@ -32,8 +35,10 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   isOpen,
   onClose,
   campaign,
-  onDonationCompleted
+  onDonationCompleted,
+  cmsConfig: propCmsConfig
 }) => {
+  const currentCmsConfig = propCmsConfig || getCmsConfig();
   const [step, setStep] = useState<'form' | 'payment' | 'success'>('form');
   const [selectedAmount, setSelectedAmount] = useState<number>(100000);
   const [customAmount, setCustomAmount] = useState<string>('');
@@ -78,20 +83,16 @@ export const DonationModal: React.FC<DonationModalProps> = ({
     setStep('payment');
   };
 
-  const handleSimulatePaymentSuccess = () => {
+  const handleConfirmPayment = () => {
     if (!createdTransaction) return;
     setIsVerifying(true);
     setTimeout(() => {
-      const verified = verifyTransaction(createdTransaction.id);
       setIsVerifying(false);
-      if (verified) {
-        setCreatedTransaction(verified);
-        setStep('success');
-        if (onDonationCompleted) {
-          onDonationCompleted(verified);
-        }
+      setStep('success');
+      if (onDonationCompleted) {
+        onDonationCompleted(createdTransaction);
       }
-    }, 700);
+    }, 400);
   };
 
   const copyToClipboard = (text: string) => {
@@ -119,9 +120,9 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             )}
             <div>
               <h3 className="text-sm font-bold">
-                {step === 'form' && 'Formulir Donasi Terintegrasi'}
-                {step === 'payment' && 'Instruksi Pembayaran Digital'}
-                {step === 'success' && 'Donasi Berhasil & Terverifikasi'}
+                {step === 'form' && 'Formulir Donasi'}
+                {step === 'payment' && 'Instruksi Pembayaran Donasi'}
+                {step === 'success' && 'Konfirmasi Pembayaran Diterima'}
               </h3>
               <p className="text-[11px] text-blue-100 truncate max-w-[260px]">
                 {campaign ? campaign.title : 'Yayasan Prakarsa Hadji Abdul Muis'}
@@ -386,7 +387,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             </form>
           )}
 
-          {/* STEP 2: PAYMENT SCREEN WITH AUTO-SIMULATION */}
+          {/* STEP 2: PAYMENT SCREEN */}
           {step === 'payment' && createdTransaction && (
             <div className="space-y-4">
               <div className="text-center p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
@@ -394,47 +395,23 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 <div className="text-2xl font-black text-[#060ee3] dark:text-blue-400 mt-0.5">
                   Rp {createdTransaction.totalAmount.toLocaleString('id-ID')}
                 </div>
-                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-                  (Kode verifikasi otomatis: {createdTransaction.uniqueCode})
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
+                  (Kode unik transfer: {createdTransaction.uniqueCode})
                 </span>
               </div>
 
               {/* Payment Channel display */}
               {createdTransaction.paymentMethod === 'qris' ? (
-                <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center flex flex-col items-center">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs font-bold text-slate-800 dark:text-white">QRIS Standar Indonesia</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-rose-500 text-white font-bold">NMID: ID102026198</span>
-                  </div>
-
-                  {/* QRIS visual mockup */}
-                  <div className="p-3 bg-white rounded-xl shadow-md border border-slate-200 flex flex-col items-center">
-                    <div className="w-48 h-48 bg-slate-900 p-2 rounded-lg flex items-center justify-center relative">
-                      <div className="w-full h-full bg-white rounded-sm p-2 flex flex-col items-center justify-between">
-                        {/* QR pattern representation */}
-                        <div className="w-full h-full grid grid-cols-6 grid-rows-6 gap-1 p-1 bg-slate-100 rounded-xs">
-                          <div className="bg-black rounded-xs col-span-2 row-span-2"></div>
-                          <div className="bg-black/60 rounded-xs"></div>
-                          <div className="bg-black/40 rounded-xs"></div>
-                          <div className="bg-black rounded-xs col-span-2 row-span-2"></div>
-                          
-                          <div className="bg-black/80 rounded-xs"></div>
-                          <div className="bg-[#060ee3] rounded-xs flex items-center justify-center text-[7px] text-white font-bold">P</div>
-                          <div className="bg-black/70 rounded-xs"></div>
-                          <div className="bg-black/90 rounded-xs"></div>
-
-                          <div className="bg-black rounded-xs col-span-2 row-span-2"></div>
-                          <div className="bg-black/30 rounded-xs"></div>
-                          <div className="bg-black/80 rounded-xs"></div>
-                          <div className="bg-black/60 rounded-xs"></div>
-                          <div className="bg-black/80 rounded-xs"></div>
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-[10px] text-slate-500 mt-2 font-medium">
-                      Buka aplikasi BCA, Mandiri, GoPay, OVO, atau DANA Anda untuk scan
-                    </span>
-                  </div>
+                <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center flex flex-col items-center space-y-2">
+                  <QrisDisplay 
+                    imageUrl={currentCmsConfig.qrisImageUrl}
+                    merchantName={currentCmsConfig.qrisMerchantName || 'PARAMIS FOUNDATION'}
+                    nmid={currentCmsConfig.qrisNmid || 'ID102026198'}
+                    amount={createdTransaction.totalAmount}
+                    invoiceNumber={createdTransaction.invoiceNumber}
+                    size="md"
+                    showScanNotice={true}
+                  />
                 </div>
               ) : (
                 <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3">
@@ -463,52 +440,54 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 </div>
               )}
 
-              {/* Instant Verification Simulator */}
-              <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 space-y-2">
-                <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                  <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>Sistem Verifikasi Otomatis Real-Time</span>
+              {/* Status & Manual Check Notice */}
+              <div className="p-3.5 rounded-2xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-amber-900 dark:text-amber-300">
+                  <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span>Status Pembayaran: Diproses oleh Admin</span>
                 </div>
-                <p className="text-[11px] text-emerald-700 dark:text-emerald-300/80 leading-relaxed">
-                  Dalam mode digital ini, Anda dapat mensimulasikan pembayaran instan layaknya di mobile banking / e-wallet. Sistem akan otomatis memverifikasi saldo, mencatat ke database terpusat, dan menerbitkan e-kwitansi resmi.
+                <p className="text-xs text-amber-800 dark:text-amber-200 leading-relaxed font-medium">
+                  Pembayaran akan dicek oleh admin, dan status pembayaran diproses oleh admin. Terima kasih atas donasi Anda.
                 </p>
-
-                <button
-                  id="btn-simulate-payment"
-                  onClick={handleSimulatePaymentSuccess}
-                  disabled={isVerifying}
-                  className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer flex items-center justify-center gap-2"
-                >
-                  {isVerifying ? (
-                    <span>Memverifikasi mutasi bank & QRIS...</span>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Simulasikan Pembayaran Sukses (Otomatis)</span>
-                    </>
-                  )}
-                </button>
               </div>
+
+              {/* Button: Saya sudah membayar */}
+              <button
+                id="btn-confirm-payment"
+                type="button"
+                onClick={handleConfirmPayment}
+                disabled={isVerifying}
+                className="w-full py-3.5 px-4 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white text-xs font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-98"
+              >
+                {isVerifying ? (
+                  <span>Menyimpan konfirmasi...</span>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4 stroke-[2.5]" />
+                    <span>Saya sudah membayar</span>
+                  </>
+                )}
+              </button>
             </div>
           )}
 
-          {/* STEP 3: SUCCESS & DIGITAL E-RECEIPT */}
+          {/* STEP 3: KONFIRMASI PEMBAYARAN */}
           {step === 'success' && createdTransaction && (
             <div className="space-y-4">
-              <div className="flex flex-col items-center text-center p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800">
-                <div className="w-12 h-12 rounded-full bg-emerald-500 text-white flex items-center justify-center mb-2 shadow-md">
+              <div className="flex flex-col items-center text-center p-4 rounded-2xl bg-blue-50/80 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800">
+                <div className="w-12 h-12 rounded-full bg-[#060ee3] text-white flex items-center justify-center mb-2 shadow-md">
                   <Check className="w-6 h-6 stroke-[3]" />
                 </div>
-                <h4 className="text-base font-bold text-emerald-900 dark:text-emerald-200">
-                  Alhamdulillah, Donasi Diterima!
+                <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                  Konfirmasi Pembayaran Diterima
                 </h4>
-                <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1 max-w-xs">
-                  Semoga Allah SWT membalas dengan keberkahan melimpah, kesehatan, dan kelapangan rezeki.
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 max-w-xs font-medium">
+                  Pembayaran akan dicek oleh admin, dan status pembayaran diproses oleh admin. Terima kasih atas donasi Anda.
                 </p>
               </div>
 
-              {/* Official Digital E-Receipt Card */}
-              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border-2 border-[#060ee3]/30 shadow-md space-y-3 relative overflow-hidden">
+              {/* Bukti Donasi Card */}
+              <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 shadow-md space-y-3 relative overflow-hidden">
                 <div className="flex justify-between items-start border-b border-slate-200 dark:border-slate-700 pb-3">
                   <div>
                     <ParamisLogo variant="auto" size="xs" />
@@ -517,10 +496,10 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                     </span>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
-                      LUNAS / VERIFIED
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                      DIPROSES OLEH ADMIN
                     </span>
-                    <p className="text-[9px] font-mono text-slate-500 mt-1">{createdTransaction.receiptNumber}</p>
+                    <p className="text-[9px] font-mono text-slate-500 mt-1">{createdTransaction.invoiceNumber}</p>
                   </div>
                 </div>
 
@@ -550,20 +529,26 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                     </span>
                   </div>
                   <div className="flex justify-between">
+                    <span className="text-slate-500">Status:</span>
+                    <span className="font-semibold text-amber-600 dark:text-amber-400">
+                      Diproses oleh Admin
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-slate-500">Waktu:</span>
                     <span className="text-slate-700 dark:text-slate-300 text-[11px]">
-                      {new Date(createdTransaction.verifiedAt || Date.now()).toLocaleString('id-ID')}
+                      {new Date(createdTransaction.createdAt || Date.now()).toLocaleString('id-ID')}
                     </span>
                   </div>
                 </div>
 
-                {/* Stamp & verification watermark */}
+                {/* Status Notice */}
                 <div className="pt-3 border-t border-dashed border-slate-200 dark:border-slate-700 flex items-center justify-between text-[10px] text-slate-500">
-                  <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>Tervalidasi Digital PARAMIS</span>
+                  <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400 font-medium">
+                    <Clock className="w-3.5 h-3.5 text-amber-500" />
+                    <span>Pembayaran akan dicek oleh admin</span>
                   </div>
-                  <span>Dicatat di Database Real-Time</span>
+                  <span className="font-semibold text-[#060ee3] dark:text-blue-400">Terima kasih</span>
                 </div>
               </div>
 
@@ -571,7 +556,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => alert(`E-Kwitansi resmi telah dikirimkan ke email: ${createdTransaction.donorEmail}`)}
+                  onClick={() => alert(`Bukti konfirmasi donasi telah dicatat dan dikirimkan ke email: ${createdTransaction.donorEmail}`)}
                   className="py-2.5 px-3 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />

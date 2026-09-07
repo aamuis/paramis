@@ -605,7 +605,7 @@ export function verifyTransaction(transactionId: string): DonationTransaction | 
   return tx;
 }
 
-// Volunteer registration with Automated Verification System
+// Volunteer registration - Only Admin can ACC/approve the applicant
 export function registerVolunteer(input: {
   fullName: string;
   email: string;
@@ -617,6 +617,7 @@ export function registerVolunteer(input: {
   interestCategory: CampaignCategory;
   motivation: string;
   availability: 'weekdays' | 'weekends' | 'flexible' | 'emergency';
+  avatarUrl?: string;
 }): { volunteer: VolunteerApplicant; passedAutoVerification: boolean } {
   let score = 0;
   const notes: string[] = [];
@@ -636,29 +637,30 @@ export function registerVolunteer(input: {
 
   if (input.age >= 17 && input.age <= 60) {
     score += 20;
-    notes.push(`Usia memenuhi kriteria relawan aktif (${input.age} tahun)`);
+    notes.push(`Usia produktif (${input.age} tahun)`);
   }
 
   if (input.motivation.trim().length >= 25) {
     score += 20;
-    notes.push('Motivasi pengabdian jelas & memenuhi syarat');
+    notes.push('Motivasi pengabdian jelas');
   } else {
-    notes.push('Motivasi singkat, direkomendasikan penguatan wawancara');
+    notes.push('Motivasi singkat, perlu tinjauan lanjutan');
   }
 
   if (input.skills.length > 0) {
     score += 15;
-    notes.push(`Keahlian spesifik terdeteksi (${input.skills.join(', ')})`);
+    notes.push(`Keahlian: ${input.skills.join(', ')}`);
   }
 
-  const passedAuto = score >= 75;
   const randomIdNumber = Math.floor(1000 + Math.random() * 9000);
   const idCardNumber = `REL-PRM-${new Date().getFullYear()}-${randomIdNumber}`;
 
+  // Sesuai instruksi: HANYA ADMIN yang bisa ACC apakah relawan lolos atau tidak
+  // Semua pendaftaran baru masuk status 'pending_review'
   const volunteer: VolunteerApplicant = {
     id: `vol-${Date.now()}`,
     ...input,
-    status: passedAuto ? 'verified_auto' : 'pending_review',
+    status: 'pending_review',
     verificationScore: score,
     verificationNotes: notes,
     idCardNumber,
@@ -672,21 +674,39 @@ export function registerVolunteer(input: {
     id: `eml-${Date.now()}`,
     toEmail: volunteer.email,
     donorName: volunteer.fullName,
-    subject: passedAuto
-      ? `Selamat! Verifikasi Otomatis Relawan PARAMIS Disetujui [No: ${idCardNumber}]`
-      : `Konfirmasi Pendaftaran Relawan PARAMIS FOUNDATION`,
+    subject: `Pendaftaran Relawan Diterima [No: ${idCardNumber}] - Menunggu Verifikasi Admin`,
     type: 'volunteer_welcome',
     sentAt: new Date().toISOString(),
     status: 'delivered',
-    contentSnippet: passedAuto
-      ? `Halo ${volunteer.fullName}, sistem verifikasi otomatis PARAMIS FOUNDATION telah menyetujui pendaftaran Anda dengan skor ${score}/100. Kartu E-KTA Relawan Anda siap digunakan.`
-      : `Halo ${volunteer.fullName}, berkas Anda sedang ditinjau oleh Koordinator Relawan PARAMIS.`
+    contentSnippet: `Halo ${volunteer.fullName}, pendaftaran relawan Anda telah kami terima. Berkas Anda sedang dalam proses peninjauan oleh Admin PARAMIS FOUNDATION untuk proses ACC & verifikasi resmi.`
   };
   cache.emailLogs = [newEmail, ...cache.emailLogs];
   upsertRow('email_logs', newEmail.id, newEmail);
 
   notifySubscribers();
-  return { volunteer, passedAutoVerification: passedAuto };
+  return { volunteer, passedAutoVerification: false };
+}
+
+export function updateVolunteerAvatar(id: string, avatarUrl: string): void {
+  const index = cache.volunteers.findIndex(v => v.id === id);
+  if (index !== -1) {
+    const next = [...cache.volunteers];
+    next[index] = { ...next[index], avatarUrl };
+    cache.volunteers = next;
+    notifySubscribers();
+    upsertRow('volunteers', id, next[index]);
+  }
+}
+
+export function updateVolunteer(id: string, updates: Partial<VolunteerApplicant>): void {
+  const index = cache.volunteers.findIndex(v => v.id === id);
+  if (index !== -1) {
+    const next = [...cache.volunteers];
+    next[index] = { ...next[index], ...updates };
+    cache.volunteers = next;
+    notifySubscribers();
+    upsertRow('volunteers', id, next[index]);
+  }
 }
 
 export function updateVolunteerStatus(id: string, status: VolunteerApplicant['status']): void {
