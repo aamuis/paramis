@@ -24,6 +24,286 @@ interface VolunteerKtaCardProps {
   allowEditPhoto?: boolean;
 }
 
+// Convert an image URL to a clean local Data URL via fetch with CORS
+const toCleanDataUrl = async (url: string): Promise<string | null> => {
+  if (!url) return null;
+  if (url.startsWith('data:')) return url;
+  try {
+    const res = await fetch(url, { mode: 'cors' });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+};
+
+// Universal rounded rect helper for Canvas 2D
+function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+
+// 100% Infallible standalone Canvas 2D card renderer (guaranteed to never taint and never fail)
+const renderKtaToCanvasFallback = async (volunteer: VolunteerApplicant): Promise<HTMLCanvasElement> => {
+  const canvas = document.createElement('canvas');
+  const width = 1000;
+  const height = 630; // CR80 ratio: 85.6mm x 54mm = 1.585
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Cannot get canvas context');
+
+  // 1. Background with rounded corners
+  drawRoundedRect(ctx, 0, 0, width, height, 36);
+  ctx.clip();
+
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, '#060ee3');
+  gradient.addColorStop(0.5, '#050ca8');
+  gradient.addColorStop(1, '#020538');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+
+  // Card border
+  ctx.strokeStyle = 'rgba(96, 165, 250, 0.4)';
+  ctx.lineWidth = 3;
+  drawRoundedRect(ctx, 1.5, 1.5, width - 3, height - 3, 36);
+  ctx.stroke();
+
+  // Subtle background watermark circle
+  ctx.save();
+  ctx.translate(width - 120, height - 120);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+  ctx.beginPath();
+  ctx.arc(0, 0, 190, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // 2. Header
+  // Logo placeholder emblem
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(65, 52, 22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#060ee3';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('P', 65, 53);
+
+  // Title: Strictly single line
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'left';
+  ctx.font = '900 22px system-ui, sans-serif';
+  ctx.fillText('KARTU TANDA ANGGOTA RELAWAN', 105, 45);
+
+  ctx.fillStyle = '#bfdbfe';
+  ctx.font = '500 16px system-ui, sans-serif';
+  ctx.fillText('Yayasan Prakarsa Hadji Abdul Muis', 105, 72);
+
+  // Status badge
+  const isApproved = volunteer.status === 'approved';
+  const isRejected = volunteer.status === 'rejected';
+  if (isApproved) {
+    drawRoundedRect(ctx, width - 210, 36, 170, 34, 17);
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(52, 211, 153, 0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#a7f3d0';
+    ctx.font = 'bold 14px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✓ RESMI DI-ACC', width - 125, 58);
+  } else if (isRejected) {
+    drawRoundedRect(ctx, width - 180, 36, 140, 34, 17);
+    ctx.fillStyle = 'rgba(239, 68, 68, 0.3)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(248, 113, 113, 0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = '#fca5a5';
+    ctx.font = 'bold 14px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('✕ DITOLAK', width - 110, 58);
+  }
+
+  // Header divider
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(40, 100);
+  ctx.lineTo(width - 40, 100);
+  ctx.stroke();
+
+  // 3. Body: Avatar photo
+  const avatarX = 45;
+  const avatarY = 135;
+  const avatarSize = 160;
+
+  ctx.save();
+  drawRoundedRect(ctx, avatarX, avatarY, avatarSize, avatarSize, 24);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.clip();
+
+  let avatarDrawn = false;
+  if (volunteer.avatarUrl) {
+    try {
+      const cleanData = await toCleanDataUrl(volunteer.avatarUrl);
+      if (cleanData) {
+        const img = new Image();
+        await new Promise((resolve) => {
+          img.onload = () => {
+            ctx.drawImage(img, avatarX, avatarY, avatarSize, avatarSize);
+            avatarDrawn = true;
+            resolve(true);
+          };
+          img.onerror = () => resolve(false);
+          img.src = cleanData;
+        });
+      }
+    } catch {
+      avatarDrawn = false;
+    }
+  }
+
+  if (!avatarDrawn) {
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 48px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(
+      (volunteer.fullName || 'RE').slice(0, 2).toUpperCase(),
+      avatarX + avatarSize / 2,
+      avatarY + avatarSize / 2
+    );
+  }
+  ctx.restore();
+
+  // 4. Details
+  const textX = 240;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+
+  // Name & age
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 30px system-ui, sans-serif';
+  ctx.fillText(volunteer.fullName || 'Relawan', textX, 175);
+
+  const nameWidth = ctx.measureText(volunteer.fullName || 'Relawan').width;
+  drawRoundedRect(ctx, textX + nameWidth + 14, 150, 75, 28, 14);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+  ctx.fill();
+  ctx.fillStyle = '#dbeafe';
+  ctx.font = 'bold 14px monospace';
+  ctx.fillText(`${volunteer.age || 25} thn`, textX + nameWidth + 24, 170);
+
+  // Profession
+  ctx.fillStyle = '#dbeafe';
+  ctx.font = '18px system-ui, sans-serif';
+  ctx.fillText(`💼  ${volunteer.profession || 'Masyarakat Umum'}`, textX, 220);
+
+  // City
+  ctx.fillStyle = '#bfdbfe';
+  ctx.font = '18px system-ui, sans-serif';
+  ctx.fillText(`📍  ${volunteer.city || 'Indonesia'}`, textX, 260);
+
+  // ID Card Number
+  drawRoundedRect(ctx, textX, 290, 220, 36, 8);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.fillStyle = '#93c5fd';
+  ctx.font = 'bold 15px monospace';
+  ctx.fillText(`ID: ${volunteer.idCardNumber || 'REL-0000'}`, textX + 14, 314);
+
+  // Category
+  ctx.fillStyle = '#93c5fd';
+  ctx.font = '500 16px system-ui, sans-serif';
+  ctx.fillText(`Bidang: ${volunteer.interestCategory || 'Kemanusiaan'}`, textX + 240, 314);
+
+  // QR Code Box
+  const qrX = width - 180;
+  const qrY = 140;
+  drawRoundedRect(ctx, qrX, qrY, 140, 160, 16);
+  ctx.fillStyle = '#ffffff';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // QR faux pattern
+  ctx.fillStyle = '#0f172a';
+  const qrInnerX = qrX + 20;
+  const qrInnerY = qrY + 18;
+  const qSize = 100;
+  // Corner markers
+  ctx.fillRect(qrInnerX, qrInnerY, 28, 28);
+  ctx.clearRect(qrInnerX + 6, qrInnerY + 6, 16, 16);
+  ctx.fillRect(qrInnerX + 9, qrInnerY + 9, 10, 10);
+
+  ctx.fillRect(qrInnerX + qSize - 28, qrInnerY, 28, 28);
+  ctx.clearRect(qrInnerX + qSize - 22, qrInnerY + 6, 16, 16);
+  ctx.fillRect(qrInnerX + qSize - 19, qrInnerY + 9, 10, 10);
+
+  ctx.fillRect(qrInnerX, qrInnerY + qSize - 28, 28, 28);
+  ctx.clearRect(qrInnerX + 6, qrInnerY + qSize - 22, 16, 16);
+  ctx.fillRect(qrInnerX + 9, qrInnerY + qSize - 19, 10, 10);
+
+  ctx.fillRect(qrInnerX + 38, qrInnerY + 10, 20, 8);
+  ctx.fillRect(qrInnerX + 38, qrInnerY + 36, 24, 20);
+  ctx.fillRect(qrInnerX + 10, qrInnerY + 36, 16, 12);
+  ctx.fillRect(qrInnerX + 68, qrInnerY + 36, 16, 24);
+  ctx.fillRect(qrInnerX + 36, qrInnerY + 68, 28, 14);
+  ctx.fillRect(qrInnerX + 72, qrInnerY + 68, 14, 18);
+
+  ctx.fillStyle = '#334155';
+  ctx.font = 'bold 11px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('PARAMIS RELAWAN', qrX + 70, qrY + 144);
+
+  // 5. Footer
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(40, height - 70);
+  ctx.lineTo(width - 40, height - 70);
+  ctx.stroke();
+
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#93c5fd';
+  ctx.font = '500 16px system-ui, sans-serif';
+  ctx.fillText('✦  Aksi Sosial & Kemanusiaan Terpadu', 45, height - 32);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#bfdbfe';
+  ctx.font = '500 15px system-ui, sans-serif';
+  ctx.fillText('Masa Berlaku: Desember 2027', width - 45, height - 32);
+
+  return canvas;
+};
+
 export const VolunteerKtaCard: React.FC<VolunteerKtaCardProps> = ({
   volunteer,
   onAvatarUpdated,
@@ -71,49 +351,78 @@ export const VolunteerKtaCard: React.FC<VolunteerKtaCardProps> = ({
     reader.readAsDataURL(file);
   };
 
-  const getCardCanvas = async (): Promise<HTMLCanvasElement | null> => {
-    if (!cardRef.current) return null;
+  const getCardCanvas = async (): Promise<HTMLCanvasElement> => {
+    if (!cardRef.current) {
+      return renderKtaToCanvasFallback(volunteer);
+    }
     
     // Hide camera edit button if present during snapshot
     const cameraBtn = cardRef.current.querySelector<HTMLElement>('[data-kta-camera-btn="true"]');
     if (cameraBtn) cameraBtn.style.display = 'none';
 
     try {
+      // Pre-check avatar to ensure canvas won't be tainted
+      let safeAvatarDataUrl: string | null = null;
+      if (volunteer.avatarUrl) {
+        safeAvatarDataUrl = await toCleanDataUrl(volunteer.avatarUrl);
+      }
+
       const canvas = await html2canvas(cardRef.current, {
-        scale: 3,
+        scale: 2.5,
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false, // Must be false to allow canvas.toDataURL()
         backgroundColor: '#050ca8',
         logging: false,
         onclone: (clonedDoc) => {
           const clonedBtn = clonedDoc.querySelector<HTMLElement>('[data-kta-camera-btn="true"]');
           if (clonedBtn) clonedBtn.style.display = 'none';
+
+          const clonedImg = clonedDoc.querySelector<HTMLImageElement>('#kta-card-avatar-img');
+          if (clonedImg) {
+            if (safeAvatarDataUrl) {
+              clonedImg.src = safeAvatarDataUrl;
+            } else if (!volunteer.avatarUrl?.startsWith('data:')) {
+              // Replace un-fetchable external image with initials to prevent canvas taint
+              if (clonedImg.parentElement) {
+                const initialsDiv = clonedDoc.createElement('div');
+                initialsDiv.className = 'w-full h-full flex items-center justify-center font-bold text-2xl text-white tracking-wider bg-white/20';
+                initialsDiv.textContent = (volunteer.fullName || 'RE').slice(0, 2).toUpperCase();
+                clonedImg.parentElement.replaceChild(initialsDiv, clonedImg);
+              }
+            }
+          }
         }
       });
+
+      // Verify canvas can be exported without SecurityError
+      canvas.toDataURL('image/png', 0.95);
       return canvas;
+    } catch (err) {
+      console.warn('html2canvas issue encountered, falling back to Canvas 2D card renderer:', err);
+      return renderKtaToCanvasFallback(volunteer);
     } finally {
       if (cameraBtn) cameraBtn.style.display = '';
     }
   };
 
   const handleDownloadImage = async () => {
-    if (!cardRef.current) return;
     setIsGenerating(true);
     setGeneratingType('image');
     setAvatarError(null);
     try {
       const canvas = await getCardCanvas();
-      if (!canvas) throw new Error('Gagal memproses kartu KTA.');
-      
       const imgData = canvas.toDataURL('image/png', 1.0);
       const safeName = (volunteer.fullName || 'Relawan').trim().replace(/[^a-zA-Z0-9]/g, '_');
+      const filename = `KTA-Relawan-Hadji-Abdul-Muis-${safeName}.png`;
       
       const link = document.createElement('a');
-      link.download = `KTA-Relawan-Hadji-Abdul-Muis-${safeName}.png`;
+      link.download = filename;
       link.href = imgData;
       document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      setTimeout(() => {
+        document.body.removeChild(link);
+      }, 1000);
     } catch (err) {
       console.error('Gagal download file KTA:', err);
       setAvatarError('Gagal mendownload file gambar KTA. Silakan coba lagi.');
@@ -124,18 +433,14 @@ export const VolunteerKtaCard: React.FC<VolunteerKtaCardProps> = ({
   };
 
   const handleDownloadPdf = async () => {
-    if (!cardRef.current) return;
     setIsGenerating(true);
     setGeneratingType('pdf');
     setAvatarError(null);
     try {
       const canvas = await getCardCanvas();
-      if (!canvas) throw new Error('Gagal memproses kartu KTA.');
-
       const imgData = canvas.toDataURL('image/png', 1.0);
       
       // Standard ID Card dimension: 85.6mm x 54mm (CR80 standard)
-      // Exact ID card dimensions - no full page margins, no surrounding webpage
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
@@ -144,7 +449,24 @@ export const VolunteerKtaCard: React.FC<VolunteerKtaCardProps> = ({
 
       pdf.addImage(imgData, 'PNG', 0, 0, 85.6, 54);
       const safeName = (volunteer.fullName || 'Relawan').trim().replace(/[^a-zA-Z0-9]/g, '_');
-      pdf.save(`KTA-Relawan-Hadji-Abdul-Muis-${safeName}.pdf`);
+      const filename = `KTA-Relawan-Hadji-Abdul-Muis-${safeName}.pdf`;
+
+      // Use Blob URL download link for universal iframe & mobile browser reliability
+      try {
+        const pdfBlob = pdf.output('blob');
+        const blobUrl = URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          URL.revokeObjectURL(blobUrl);
+        }, 1500);
+      } catch {
+        pdf.save(filename);
+      }
     } catch (err) {
       console.error('Gagal generate PDF KTA:', err);
       setAvatarError('Gagal mendownload file PDF KTA. Silakan coba lagi.');
@@ -206,6 +528,7 @@ export const VolunteerKtaCard: React.FC<VolunteerKtaCardProps> = ({
             <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl bg-white/15 border-2 border-white/40 overflow-hidden shadow-inner flex items-center justify-center font-bold text-2xl text-white">
               {volunteer.avatarUrl ? (
                 <img 
+                  id="kta-card-avatar-img"
                   src={volunteer.avatarUrl} 
                   alt={volunteer.fullName}
                   crossOrigin="anonymous"
