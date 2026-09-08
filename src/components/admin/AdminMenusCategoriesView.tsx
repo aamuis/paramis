@@ -90,6 +90,7 @@ export const AdminMenusCategoriesView: React.FC<AdminMenusCategoriesViewProps> =
       pathOrTab: isExternalLink ? newMenuExternalUrl.trim() : newMenuPath,
       iconName: newMenuIcon,
       isExternal: isExternalLink,
+      externalUrl: isExternalLink ? newMenuExternalUrl.trim() : undefined,
       isActive: true
     };
 

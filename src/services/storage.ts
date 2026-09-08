@@ -193,7 +193,45 @@ function applyCmsMigrations(input: CmsConfig): { config: CmsConfig; changed: boo
     changed = true;
   }
 
+  if (config.tagline && (config.tagline.includes('Ummat') || config.tagline.includes('ummat'))) {
+    config.tagline = INITIAL_CMS_CONFIG.tagline;
+    changed = true;
+  }
+
+  if (config.aboutStory && (
+    config.aboutStory.includes('filantropi Islam') || 
+    config.aboutStory.includes('kaum dhuafa') ||
+    config.aboutStory.includes('melanjutkan nilai-nilai luhur') ||
+    config.aboutStory.includes('almarhum')
+  )) {
+    config.aboutStory = INITIAL_CMS_CONFIG.aboutStory;
+    changed = true;
+  }
+
+  if (config.vision && (config.vision.includes('filantropi Islam') || config.vision.includes('martabat kaum dhuafa'))) {
+    config.vision = INITIAL_CMS_CONFIG.vision;
+    changed = true;
+  }
+
+  if (config.missions && Array.isArray(config.missions)) {
+    const hasAmbulance = config.missions.some(m => m.toLowerCase().includes('ambulans') || m.toLowerCase().includes('riba'));
+    if (hasAmbulance) {
+      config.missions = INITIAL_CMS_CONFIG.missions;
+      changed = true;
+    }
+  }
+
   if (config.customMenuItems && Array.isArray(config.customMenuItems)) {
+    // Migrate ambulance menu item to social aid / sembako
+    const ambMenu = config.customMenuItems.find(m => m.id === 'menu-ambulance' || (m.title && m.title.toLowerCase().includes('ambulan')));
+    if (ambMenu) {
+      ambMenu.id = 'menu-bansos';
+      ambMenu.title = 'Bantuan Sosial & Sembako';
+      ambMenu.pathOrTab = 'bansos';
+      ambMenu.iconName = 'HeartHandshake';
+      changed = true;
+    }
+
     const zakatMenu = config.customMenuItems.find(m => m.id === 'menu-zakat');
     if (zakatMenu && (zakatMenu.pathOrTab === 'donations' || zakatMenu.pathOrTab === '')) {
       zakatMenu.pathOrTab = 'zakat';
@@ -212,6 +250,32 @@ function applyCmsMigrations(input: CmsConfig): { config: CmsConfig; changed: boo
         }
       ];
       changed = true;
+    }
+    const paramisMenu = config.customMenuItems.find(m => m.id === 'menu-institut-paramis' || (m.externalUrl && m.externalUrl.includes('institutparamis.com')) || (m.title && m.title.toLowerCase().includes('institut paramis')));
+    if (!paramisMenu) {
+      config.customMenuItems = [
+        ...config.customMenuItems,
+        {
+          id: 'menu-institut-paramis',
+          title: 'Pelatihan Gratis di Institut Paramis untuk Janda Yatim supaya dapat penghasilan tambahan',
+          pathOrTab: 'https://institutparamis.com',
+          iconName: 'GraduationCap',
+          isExternal: true,
+          externalUrl: 'https://institutparamis.com',
+          isActive: true
+        }
+      ];
+      changed = true;
+    } else {
+      if (paramisMenu.title !== 'Pelatihan Gratis di Institut Paramis untuk Janda Yatim supaya dapat penghasilan tambahan' || paramisMenu.externalUrl !== 'https://institutparamis.com' || !paramisMenu.isActive) {
+        paramisMenu.title = 'Pelatihan Gratis di Institut Paramis untuk Janda Yatim supaya dapat penghasilan tambahan';
+        paramisMenu.externalUrl = 'https://institutparamis.com';
+        paramisMenu.pathOrTab = 'https://institutparamis.com';
+        paramisMenu.isExternal = true;
+        paramisMenu.isActive = true;
+        paramisMenu.iconName = 'GraduationCap';
+        changed = true;
+      }
     }
   } else {
     config.customMenuItems = INITIAL_CMS_CONFIG.customMenuItems;
@@ -295,8 +359,18 @@ async function initDatabase(): Promise<void> {
       // cache sudah berisi nilai INITIAL_* dari awal, tidak perlu diubah lagi
     } else {
       cache.cmsConfig = cmsConfig ? applyCmsMigrations(cmsConfig).config : INITIAL_CMS_CONFIG;
-      cache.services = services.length ? services : INITIAL_SERVICES;
-      cache.campaigns = campaigns;
+      cache.services = (services.length ? services : INITIAL_SERVICES).map(s => {
+        if (s.id === 'srv-4' || s.title.toLowerCase().includes('ambulan')) {
+          return INITIAL_SERVICES.find(is => is.id === 'srv-4') || s;
+        }
+        return s;
+      });
+      cache.campaigns = (campaigns.length ? campaigns : INITIAL_CAMPAIGNS).map(c => {
+        if (c.id === 'camp-3' || c.title.toLowerCase().includes('ambulans')) {
+          return INITIAL_CAMPAIGNS.find(ic => ic.id === 'camp-3') || c;
+        }
+        return c;
+      });
       cache.transactions = transactions;
       cache.volunteers = volunteers;
       cache.reports = reports;

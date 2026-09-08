@@ -5,7 +5,9 @@ export type CampaignCategory =
   | 'bencana'
   | 'kesehatan'
   | 'dakwah'
-  | 'ekonomi';
+  | 'ekonomi'
+  | 'kemanusiaan'
+  | 'sosial';
 
 export interface CampaignUpdate {
   id: string;

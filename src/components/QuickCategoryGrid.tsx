@@ -43,7 +43,7 @@ export const QuickCategoryGrid: React.FC<QuickCategoryGridProps> = ({
     {
       id: 'donasi-rutin',
       title: 'Donasi Rutin',
-      subtitle: 'Sedekah Subuh',
+      subtitle: 'Infaq & Donasi',
       icon: Sparkles,
       gradient: 'from-blue-600 to-blue-800',
       shadowColor: 'shadow-blue-500/20',
@@ -59,18 +59,18 @@ export const QuickCategoryGrid: React.FC<QuickCategoryGridProps> = ({
       action: onOpenZakatCalculator
     },
     {
-      id: 'ambulans-24h',
-      title: 'Ambulans 24 Jam',
-      subtitle: 'Gratis Dhuafa',
-      icon: Truck,
-      gradient: 'from-rose-600 to-red-700',
-      shadowColor: 'shadow-rose-500/20',
+      id: 'bansos-sembako',
+      title: 'Bantuan Sembako',
+      subtitle: 'Pangan Dhuafa',
+      icon: HeartHandshake,
+      gradient: 'from-blue-600 to-indigo-700',
+      shadowColor: 'shadow-blue-500/20',
       action: onOpenAmbulanceModal
     },
     {
       id: 'pendidikan',
       title: 'Pendidikan',
-      subtitle: 'Beasiswa Santri',
+      subtitle: 'Beasiswa Pelajar',
       icon: GraduationCap,
       gradient: 'from-amber-500 to-orange-600',
       shadowColor: 'shadow-amber-500/20',

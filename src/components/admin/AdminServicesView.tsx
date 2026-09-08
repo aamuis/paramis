@@ -28,7 +28,7 @@ interface AdminServicesViewProps {
 
 const AVAILABLE_ICONS = [
   { name: 'HeartHandshake', label: 'Bantuan Sosial', icon: HeartHandshake },
-  { name: 'Truck', label: 'Ambulans / Logistik', icon: Truck },
+  { name: 'Truck', label: 'Distribusi Logistik', icon: Truck },
   { name: 'GraduationCap', label: 'Pendidikan & Beasiswa', icon: GraduationCap },
   { name: 'Flame', label: 'Bencana Alam', icon: Flame },
   { name: 'Stethoscope', label: 'Kesehatan & Medis', icon: Stethoscope },

@@ -12,13 +12,13 @@ import {
 export const INITIAL_CMS_CONFIG: CmsConfig = {
   yayasanName: "Yayasan Prakarsa Hadji Abdul Muis",
   brandName: "PARAMIS FOUNDATION",
-  tagline: "Menebar Kebaikan Berkelanjutan, Menegakkan Martabat Ummat",
-  aboutStory: "Yayasan Prakarsa Hadji Abdul Muis (PARAMIS FOUNDATION) didirikan sebagai wadah filantropi Islam dan kemanusiaan terpercaya untuk melanjutkan nilai-nilai luhur kepedulian sosial Hadji Abdul Muis. Kami berdedikasi mengentaskan kemiskinan, memfasilitasi pendidikan anak-anak dhuafa, tanggap darurat bencana alam, serta menyediakan pelayanan kesehatan gratis bagi masyarakat yang membutuhkan di seluruh penjuru nusantara.",
-  vision: "Menjadi lembaga filantropi Islam dan kemanusiaan terdepan di Indonesia yang berdaya guna, transparan, dan profesional dalam menegakkan harkat martabat kaum dhuafa.",
+  tagline: "Menebar Kebaikan Berkelanjutan, Menegakkan Harkat Martabat Kemanusiaan",
+  aboutStory: "Yayasan Prakarsa Hadji Abdul Muis (PARAMIS FOUNDATION) didirikan langsung oleh Hadji Abdul Muis sebagai wadah sosial dan kemanusiaan terpercaya yang menaungi semua kalangan tanpa memandang perbedaan suku, agama, dan golongan melalui pengentasan kemiskinan, pendidikan anak prasejahtera, pelatihan keterampilan kerja mandiri, penyaluran bantuan sosial, serta tanggap darurat bencana alam di seluruh penjuru nusantara.",
+  vision: "Menjadi lembaga sosial dan kemanusiaan terdepan di Indonesia yang berdaya guna, transparan, dan profesional dalam menaungi serta memberdayakan seluruh masyarakat prasejahtera lintas agama dan golongan.",
   missions: [
-    "Menjamin akses pendidikan gratis & berkualitas bagi anak yatim prasejahtera.",
-    "Merintis respon tanggap bencana dan layanan ambulans gawat darurat 24 jam.",
-    "Membangun kemandirian ekonomi umat melalui permodalan usaha tanpa riba."
+    "Menjamin akses pendidikan dan beasiswa berkualitas bagi anak yatim dan prasejahtera.",
+    "Menyelenggarakan pelatihan keterampilan kerja terapan (Institut Paramis) untuk kemandirian ekonomi.",
+    "Menyalurkan bantuan pangan, sembako, pendampingan sosial, dan respon tanggap darurat bencana kemanusiaan."
   ],
   skKemenkumham: "AHU-0014298.AH.01.04.Tahun 2019",
   npwp: "91.829.412.3-014.000",
@@ -39,10 +39,10 @@ export const INITIAL_CMS_CONFIG: CmsConfig = {
   },
   customMenuItems: [
     {
-      id: "menu-ambulance",
-      title: "Ambulans Gratis 24 Jam",
-      pathOrTab: "ambulance",
-      iconName: "Truck",
+      id: "menu-bansos",
+      title: "Bantuan Sosial & Sembako",
+      pathOrTab: "bansos",
+      iconName: "HeartHandshake",
       isExternal: false,
       isActive: true
     },
@@ -52,6 +52,15 @@ export const INITIAL_CMS_CONFIG: CmsConfig = {
       pathOrTab: "zakat",
       iconName: "Calculator",
       isExternal: false,
+      isActive: true
+    },
+    {
+      id: "menu-institut-paramis",
+      title: "Pelatihan Gratis di Institut Paramis untuk Janda Yatim supaya dapat penghasilan tambahan",
+      pathOrTab: "https://institutparamis.com",
+      iconName: "GraduationCap",
+      isExternal: true,
+      externalUrl: "https://institutparamis.com",
       isActive: true
     },
     {
@@ -127,12 +136,12 @@ export const INITIAL_SERVICES: ServiceItem[] = [
   },
   {
     id: "srv-4",
-    title: "Layanan Ambulans & Klinik Gratis",
-    description: "Armada ambulans siap antar-jemput pasien kritis dan jenazah 24/7 tanpa dipungut biaya sepeserpun, dilengkapi oksigen dan nakes.",
-    iconName: "Ambulance",
-    category: "kesehatan",
-    badge: "Medis Siaga",
-    beneficiaries: "3.800+ Pasien Terbantu"
+    title: "Bantuan Sembako & Pangan Dhuafa",
+    description: "Penyaluran beras, sembako, dan paket nutrisi pokok bagi lansia, janda, dan keluarga prasejahtera lintas agama secara berkala.",
+    iconName: "HeartHandshake",
+    category: "kemanusiaan",
+    badge: "Pangan Merata",
+    beneficiaries: "6.200+ Keluarga Terbantu"
   },
   {
     id: "srv-5",
@@ -256,28 +265,28 @@ export const INITIAL_CAMPAIGNS: DonationCampaign[] = [
   },
   {
     id: "camp-3",
-    title: "Operasional Ambulans Medis Gratis untuk Pasien Dhuafa 24 Jam",
-    slug: "operasional-ambulans-medis-gratis-dhuafa",
-    category: "kesehatan",
-    categoryLabel: "Kesehatan",
-    shortDescription: "Bantu biaya bahan bakar, oksigen medis darurat, servis armada, dan honor tenaga paramedis pengemudi ambulans gratis.",
-    fullDescription: "Banyak keluarga pra-sejahtera kesulitan mengakses rumah sakit rujukan karena tingginya tarif sewa ambulans swasta. Yayasan Prakarsa Hadji Abdul Muis mengoperasikan 3 unit ambulans medis gratis lengkap dengan tabung oksigen, tandu darurat, dan tim paramedis bersertifikat yang siap melayani 24 jam nonstop.",
+    title: "Sedekah Paket Sembako & Pangan Keluarga Prasejahtera",
+    slug: "sedekah-paket-sembako-pangan-keluarga-prasejahtera",
+    category: "kemanusiaan",
+    categoryLabel: "Kemanusiaan",
+    shortDescription: "Bantu penyediaan beras, minyak, dan kebutuhan pokok bagi keluarga prasejahtera dan lansia dhuafa lintas agama.",
+    fullDescription: "Kenaikan harga kebutuhan pokok semakin memberatkan keluarga prasejahtera dan lansia sebatang kara. Yayasan Prakarsa Hadji Abdul Muis menyalurkan paket sembako lengkap (beras 10kg, minyak goreng, telur, terigu, dan makanan bernutrisi) secara merata dan amanah tanpa membedakan suku, ras, dan keyakinan.",
     targetAmount: 60000000,
     collectedAmount: 34100000,
     donorCount: 219,
-    coverImage: "https://images.unsplash.com/photo-1587745416684-47953f16f02f?auto=format&fit=crop&w=800&q=80",
+    coverImage: "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80",
     location: {
-      city: "Jakarta Timur",
-      province: "DKI Jakarta",
-      distanceKm: 8.7,
-      address: "Pangkalan Ambulans PARAMIS, Jatinegara",
-      latitude: -6.2154,
-      longitude: 106.8702
+      city: "Bogor",
+      province: "Jawa Barat",
+      distanceKm: 4.2,
+      address: "Posko Penyaluran PARAMIS, Cilendek Barat",
+      latitude: -6.5892,
+      longitude: 106.7741
     },
     daysLeft: 42,
     isUrgent: false,
     isFeatured: false,
-    organizer: "Layanan Kesehatan Cepat PARAMIS",
+    organizer: "Divisi Bantuan Sosial PARAMIS",
     startDate: "2026-07-15",
     endDate: "2026-10-15",
     active: true,

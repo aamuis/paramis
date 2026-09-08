@@ -32,7 +32,7 @@ import { AdminDashboard } from './components/AdminDashboard';
 import { AdminAccessModal } from './components/AdminAccessModal';
 import { QuickCategoryGrid } from './components/QuickCategoryGrid';
 import { ZakatCalculatorModal } from './components/ZakatCalculatorModal';
-import { AmbulanceServiceModal } from './components/AmbulanceServiceModal';
+import { SocialAidModal } from './components/SocialAidModal';
 import { FundraiserForm } from './components/FundraiserForm';
 import { LegalTermsView } from './components/LegalTermsView';
 import { 
@@ -51,7 +51,8 @@ import {
   Globe,
   MessageCircle,
   FileText,
-  BookOpen
+  BookOpen,
+  GraduationCap
 } from 'lucide-react';
 import { ParamisLogo } from './components/ParamisLogo';
 
@@ -84,7 +85,7 @@ export function App() {
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isTransparencyModalOpen, setIsTransparencyModalOpen] = useState(false);
   const [isZakatCalculatorOpen, setIsZakatCalculatorOpen] = useState(false);
-  const [isAmbulanceModalOpen, setIsAmbulanceModalOpen] = useState(false);
+  const [isSocialAidModalOpen, setIsSocialAidModalOpen] = useState(false);
   const [selectedVolunteerKta, setSelectedVolunteerKta] = useState<VolunteerApplicant | null>(null);
   const [searchKeyword, setSearchKeyword] = useState('');
 
@@ -225,18 +226,88 @@ export function App() {
       case 'MessageCircle': return <MessageCircle className="w-4 h-4 text-emerald-500" />;
       case 'FileText': return <FileText className="w-4 h-4 text-blue-600 dark:text-blue-400" />;
       case 'BookOpen': return <BookOpen className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />;
+      case 'GraduationCap': return <GraduationCap className="w-4 h-4 text-[#060ee3] dark:text-blue-300" />;
       default: return <Sparkles className="w-4 h-4 text-amber-500" />;
     }
   };
 
+  const getCustomMenuDetails = (menu: CustomMenuItem) => {
+    const id = menu.id || '';
+    const titleLower = (menu.title || '').toLowerCase();
+    
+    if (id === 'menu-bansos' || id === 'menu-ambulance' || titleLower.includes('bansos') || titleLower.includes('sembako') || titleLower.includes('ambulan')) {
+      return {
+        title: 'Bantuan Sosial & Sembako',
+        subtitle: 'Penyaluran beras & kebutuhan pokok warga prasejahtera',
+        badge: 'Siap Salur',
+        badgeClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200/60 dark:border-emerald-800',
+        actionText: 'Ajukan Bantuan',
+        isExternal: false
+      };
+    }
+
+    if (id === 'menu-zakat' || titleLower.includes('zakat') || titleLower.includes('kalkulator')) {
+      return {
+        title: 'Kalkulator Zakat',
+        subtitle: 'Simulasi zakat maal, profesi & fitrah akurat',
+        badge: 'Akurat & Amanah',
+        badgeClass: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200/60 dark:border-blue-800',
+        actionText: 'Hitung Zakat',
+        isExternal: false
+      };
+    }
+
+    if (id === 'menu-institut-paramis' || titleLower.includes('institut paramis') || (menu.externalUrl && menu.externalUrl.includes('institutparamis.com'))) {
+      return {
+        title: 'Pelatihan Gratis',
+        subtitle: 'Untuk janda & yatim supaya dapat penghasilan tambahan',
+        badge: 'GRATIS',
+        badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-200 dark:border-amber-800',
+        actionText: 'institutparamis.com',
+        isExternal: true
+      };
+    }
+
+    if (id === 'menu-terms' || titleLower.includes('syarat') || titleLower.includes('ketentuan') || titleLower.includes('kebijakan')) {
+      return {
+        title: 'Syarat & Ketentuan',
+        subtitle: 'Legalitas resmi yayasan, transparansi & pedoman',
+        badge: 'Resmi',
+        badgeClass: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+        actionText: 'Baca Ketentuan',
+        isExternal: false
+      };
+    }
+
+    return {
+      title: menu.title,
+      subtitle: menu.isExternal ? 'Kunjungi situs mitra resmi yayasan' : 'Akses fitur layanan sosial yayasan',
+      badge: menu.isExternal ? 'Eksternal' : 'Layanan',
+      badgeClass: 'bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border-blue-200/60 dark:border-blue-800',
+      actionText: menu.isExternal ? 'Buka Tautan' : 'Akses Fitur',
+      isExternal: menu.isExternal || false
+    };
+  };
+
   const handleCustomMenuItemClick = (menu: CustomMenuItem) => {
+    const titleLower = (menu.title || '').toLowerCase();
+    const pathLower = (menu.pathOrTab || '').toLowerCase();
+
+    // 0. Institut Paramis - Link ke domain institutparamis.com
+    if (
+      menu.id === 'menu-institut-paramis' ||
+      titleLower.includes('institut paramis') ||
+      pathLower.includes('institutparamis.com') ||
+      (menu.externalUrl && menu.externalUrl.includes('institutparamis.com'))
+    ) {
+      window.open('https://institutparamis.com', '_blank');
+      return;
+    }
+
     if (menu.isExternal && menu.externalUrl) {
       window.open(menu.externalUrl, '_blank');
       return;
     }
-
-    const titleLower = (menu.title || '').toLowerCase();
-    const pathLower = (menu.pathOrTab || '').toLowerCase();
 
     // 1. Kalkulator Zakat - Explicit Fix for user request
     if (
@@ -251,15 +322,21 @@ export function App() {
       return;
     }
 
-    // 2. Layanan Ambulans 24 Jam
+    // 2. Layanan Bantuan Sosial & Sembako
     if (
+      menu.id === 'menu-bansos' ||
       menu.id === 'menu-ambulance' ||
+      pathLower === 'bansos' ||
+      pathLower === 'sembako' ||
       pathLower === 'ambulance' ||
       pathLower === 'ambulans' ||
+      titleLower.includes('bansos') ||
+      titleLower.includes('sembako') ||
       titleLower.includes('ambulan') ||
+      menu.iconName === 'HeartHandshake' ||
       menu.iconName === 'Truck'
     ) {
-      setIsAmbulanceModalOpen(true);
+      setIsSocialAidModalOpen(true);
       return;
     }
 
@@ -279,7 +356,26 @@ export function App() {
       return;
     }
 
-    // 4. Galang Dana
+    // 4. Profil & Sejarah Yayasan
+    if (
+      pathLower === 'about' ||
+      pathLower === 'profile' ||
+      pathLower === 'sejarah' ||
+      titleLower.includes('profil') ||
+      titleLower.includes('sejarah') ||
+      titleLower.includes('tentang')
+    ) {
+      setActiveTab('home');
+      setTimeout(() => {
+        const elem = document.getElementById('about-yayasan-section');
+        if (elem) {
+          elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+      return;
+    }
+
+    // 5. Galang Dana
     if (pathLower === 'galang_dana' || pathLower === 'fundraiser' || titleLower.includes('galang')) {
       setActiveTab('galang_dana');
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -365,11 +461,6 @@ export function App() {
                 <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-44 h-44 rounded-full bg-blue-400/10 blur-2xl pointer-events-none" />
 
                 <div className="relative z-10 space-y-3">
-                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-md text-[10px] font-semibold text-white/95 border border-white/20">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                    <span>Portal Resmi Filantropi & Kemanusiaan</span>
-                  </div>
-
                   <h1 className="text-xl sm:text-2xl font-black leading-tight tracking-tight text-white">
                     {cmsConfig.heroBannerTitle}
                   </h1>
@@ -425,7 +516,7 @@ export function App() {
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 onOpenZakatCalculator={() => setIsZakatCalculatorOpen(true)}
-                onOpenAmbulanceModal={() => setIsAmbulanceModalOpen(true)}
+                onOpenAmbulanceModal={() => setIsSocialAidModalOpen(true)}
                 onQuickDonateRoutine={() => {
                   const routineCamp = campaigns.find(c => c.category === 'yatim' || c.isUrgent) || campaigns[0];
                   handleOpenDonateModal(routineCamp);
@@ -438,34 +529,64 @@ export function App() {
 
               {/* Custom Menus Added via Admin CMS */}
               {cmsConfig.customMenuItems && cmsConfig.customMenuItems.filter(m => m.isActive).length > 0 && (
-                <section className="space-y-2">
+                <section className="space-y-2.5">
                   <div className="flex items-center justify-between px-1">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-[#060ee3] dark:text-blue-400">
                       Menu & Layanan Pilihan
                     </span>
                     <span className="text-[10px] text-slate-400 font-medium">Akses Cepat</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {cmsConfig.customMenuItems.filter(m => m.isActive).map((menu) => (
-                      <button
-                        key={menu.id}
-                        onClick={() => handleCustomMenuItemClick(menu)}
-                        className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center gap-2.5 hover:border-[#060ee3] dark:hover:border-blue-500 transition-all text-left cursor-pointer active:scale-98"
-                      >
-                        <div className="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 flex items-center justify-center shrink-0">
-                          {renderCustomMenuIcon(menu.iconName)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                            {menu.title}
-                          </h4>
-                          <span className="text-[10px] text-slate-500 flex items-center gap-0.5">
-                            {menu.isExternal ? 'Tautan Eksternal' : 'Akses Langsung'}
-                            {menu.isExternal && <ExternalLink className="w-2.5 h-2.5 ml-0.5" />}
-                          </span>
-                        </div>
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                    {cmsConfig.customMenuItems.filter(m => m.isActive).map((menu) => {
+                      const details = getCustomMenuDetails(menu);
+                      const isInstitut = menu.id === 'menu-institut-paramis' || (menu.externalUrl && menu.externalUrl.includes('institutparamis.com')) || menu.title.toLowerCase().includes('institut paramis');
+
+                      return (
+                        <button
+                          key={menu.id}
+                          onClick={() => handleCustomMenuItemClick(menu)}
+                          className={`h-full min-h-[142px] p-3 sm:p-3.5 rounded-2xl border shadow-xs flex flex-col justify-between text-left cursor-pointer transition-all active:scale-98 group ${
+                            isInstitut
+                              ? 'bg-gradient-to-br from-blue-50/90 via-white to-amber-50/30 dark:from-blue-950/40 dark:via-slate-900 dark:to-amber-950/10 border-blue-200/90 dark:border-blue-800/80 hover:border-[#060ee3] hover:shadow-md'
+                              : 'bg-white dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 hover:border-[#060ee3] dark:hover:border-blue-500 hover:shadow-md'
+                          }`}
+                        >
+                          {/* Top: Icon + Status Badge */}
+                          <div className="flex items-center justify-between gap-1.5 w-full">
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform ${
+                              isInstitut 
+                                ? 'bg-[#060ee3] text-white' 
+                                : 'bg-blue-50 dark:bg-blue-950/60 text-[#060ee3] dark:text-blue-400'
+                            }`}>
+                              {renderCustomMenuIcon(menu.iconName || 'Sparkles')}
+                            </div>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border shrink-0 ${details.badgeClass}`}>
+                              {details.badge}
+                            </span>
+                          </div>
+
+                          {/* Middle: Title & Subtitle */}
+                          <div className="my-2 space-y-1 w-full">
+                            <h4 className="text-xs sm:text-[13px] font-bold text-slate-900 dark:text-white leading-snug group-hover:text-[#060ee3] dark:group-hover:text-blue-400 transition-colors">
+                              {details.title}
+                            </h4>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-snug line-clamp-2">
+                              {details.subtitle}
+                            </p>
+                          </div>
+
+                          {/* Bottom: Action Link */}
+                          <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px] font-semibold text-[#060ee3] dark:text-blue-400 w-full">
+                            <span className="truncate">{details.actionText}</span>
+                            {details.isExternal ? (
+                              <ExternalLink className="w-3 h-3 shrink-0 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                            ) : (
+                              <ChevronRight className="w-3 h-3 shrink-0 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </section>
               )}
@@ -908,13 +1029,13 @@ export function App() {
           }}
         />
 
-        {/* 24-Hour Emergency Ambulance Service Modal */}
-        <AmbulanceServiceModal 
-          isOpen={isAmbulanceModalOpen}
-          onClose={() => setIsAmbulanceModalOpen(false)}
-          onDonateAmbulance={() => {
-            const ambCampaign = campaigns.find(c => c.title.toLowerCase().includes('ambulans') || c.category === 'kesehatan') || campaigns[0];
-            handleOpenDonateModal(ambCampaign);
+        {/* Universal Social Aid & Food Assistance Modal */}
+        <SocialAidModal 
+          isOpen={isSocialAidModalOpen}
+          onClose={() => setIsSocialAidModalOpen(false)}
+          onDonateAid={() => {
+            const aidCampaign = campaigns.find(c => c.title.toLowerCase().includes('sembako') || c.category === 'kemanusiaan') || campaigns[0];
+            handleOpenDonateModal(aidCampaign);
           }}
         />
 

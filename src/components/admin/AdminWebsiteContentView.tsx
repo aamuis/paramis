@@ -206,7 +206,7 @@ export const AdminWebsiteContentView: React.FC<AdminWebsiteContentViewProps> = (
               type="text"
               value={tagline}
               onChange={(e) => setTagline(e.target.value)}
-              placeholder="Menebar Kebaikan Berkelanjutan, Menegakkan Martabat Ummat"
+              placeholder="Menebar Kebaikan Berkelanjutan, Menegakkan Harkat Martabat Kemanusiaan"
               className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#060ee3]"
             />
           </div>
@@ -232,7 +232,7 @@ export const AdminWebsiteContentView: React.FC<AdminWebsiteContentViewProps> = (
               rows={2}
               value={vision}
               onChange={(e) => setVision(e.target.value)}
-              placeholder="Menjadi lembaga filantropi Islam dan kemanusiaan terdepan..."
+              placeholder="Menjadi lembaga sosial dan kemanusiaan terdepan yang menaungi semua kalangan..."
               className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#060ee3]"
             />
           </div>

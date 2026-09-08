@@ -119,8 +119,8 @@ export const LEGAL_ARTICLES: LegalArticle[] = [
         ],
         listItems: [
           'Kampanye Donasi: Halaman digital publik yang memuat cerita, foto, target dana, durasi, serta rincian program bantuan sosial.',
-          'Donasi / Sedekah: Nilai uang yang diserahkan secara sukarela tanpa imbalan materi demi kemaslahatan ummat.',
-          'Zakat Maal / Fitrah: Harta tertentu yang wajib dikeluarkan oleh seorang muslim yang telah memenuhi nishab dan haul sesuai syariat Islam.',
+          'Donasi / Sedekah: Nilai uang yang diserahkan secara sukarela tanpa imbalan materi demi kemaslahatan sesama dan kemanusiaan universal.',
+          'Zakat Maal / Fitrah: Dana titipan bagi donatur muslim yang disalurkan tepat sasaran kepada para mustahik yang berhak.',
           'QRIS Resmi: Kode Quick Response Indonesian Standard resmi atas nama Yayasan Prakarsa Hadji Abdul Muis yang terhubung ke jaringan Bank Indonesia.',
           'Laporan Pertanggungjawaban (LPJ): Bukti dokumentasi salur, kuitansi rumah sakit/toko, nota belanja logistik, dan foto penyerahan bantuan kepada penerima manfaat.'
         ]
@@ -269,21 +269,21 @@ export const LEGAL_ARTICLES: LegalArticle[] = [
       {
         title: '1. Kriteria Penerima Manfaat yang Sah',
         paragraphs: [
-          'Penerima Manfaat adalah individu atau entitas yang memenuhi kualifikasi syariat dan kemanusiaan:',
+          'Penerima Manfaat adalah individu atau entitas yang memenuhi kualifikasi sosial dan kemanusiaan:',
         ],
         listItems: [
           'Anak yatim, piatu, atau yatim piatu usia sekolah dari keluarga prasejahtera.',
-          'Kaum fakir, miskin, dan dhuafa yang mengalami kesulitan pemenuhan kebutuhan pangan dan papan dasar.',
+          'Kaum fakir, miskin, lansia, dan warga prasejahtera yang mengalami kesulitan pemenuhan kebutuhan pangan dan papan dasar.',
           'Pasien penyakit kronis atau kritis yang terancam putus pengobatan karena ketidakmampuan ekonomi.',
           'Korban bencana alam, bencana sosial, atau musibah mendadak yang kehilangan tempat tinggal atau mata pencaharian.',
-          'Lembaga pendidikan Islam swasta dhuafa, pesantren pelosok, rumah tahfidz, atau masjid/musholla prasejahtera.'
+          'Lembaga sosial/pendidikan prasejahtera, panti asuhan, atau tempat ibadah/fasilitas umum pelosok yang membutuhkan renovasi.'
         ]
       },
       {
         title: '2. Perlindungan Harkat dan Martabat Penerima Manfaat',
         paragraphs: [
-          'PARAMIS FOUNDATION memegang teguh prinsip "Menegakkan Martabat Ummat". Seluruh proses peliputan, dokumentasi, dan narasi dilarang keras merendahkan martabat penerima manfaat.',
-          'Dilarang menampilkan foto luka parah terbuka yang vulgar, bagian tubuh yang aurat, atau wajah anak di bawah umur dalam kondisi yang mempermalukan keluarga mereka.',
+          'PARAMIS FOUNDATION memegang teguh prinsip "Menegakkan Harkat Martabat Kemanusiaan". Seluruh proses peliputan, dokumentasi, dan narasi dilarang keras merendahkan martabat penerima manfaat.',
+          'Dilarang menampilkan foto luka parah terbuka yang vulgar atau wajah anak di bawah umur dalam kondisi yang mempermalukan keluarga mereka.',
           'Penerima manfaat atau wali sah berhak meminta penyamaran nama atau wajah demi keamanan dan kenyamanan psikologis keluarga.'
         ],
         callout: {
