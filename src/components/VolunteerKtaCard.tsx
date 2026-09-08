@@ -6,11 +6,11 @@ import {
   Upload, 
   CheckCircle2, 
   XCircle, 
-  Printer, 
   MapPin, 
   Briefcase,
   Sparkles,
   FileDown,
+  ImageDown,
   Loader2
 } from 'lucide-react';
 import jsPDF from 'jspdf';
@@ -32,7 +32,8 @@ export const VolunteerKtaCard: React.FC<VolunteerKtaCardProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatingType, setGeneratingType] = useState<'image' | 'pdf' | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
 
   const isApproved = volunteer.status === 'approved';
@@ -70,38 +71,86 @@ export const VolunteerKtaCard: React.FC<VolunteerKtaCardProps> = ({
     reader.readAsDataURL(file);
   };
 
-  const handlePrintCard = () => {
-    window.print();
-  };
+  const getCardCanvas = async (): Promise<HTMLCanvasElement | null> => {
+    if (!cardRef.current) return null;
+    
+    // Hide camera edit button if present during snapshot
+    const cameraBtn = cardRef.current.querySelector<HTMLElement>('[data-kta-camera-btn="true"]');
+    if (cameraBtn) cameraBtn.style.display = 'none';
 
-  const handleDownloadPdf = async () => {
-    if (!cardRef.current) return;
-    setIsGeneratingPdf(true);
     try {
       const canvas = await html2canvas(cardRef.current, {
         scale: 3,
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#050ca8',
-        logging: false
+        logging: false,
+        onclone: (clonedDoc) => {
+          const clonedBtn = clonedDoc.querySelector<HTMLElement>('[data-kta-camera-btn="true"]');
+          if (clonedBtn) clonedBtn.style.display = 'none';
+        }
       });
+      return canvas;
+    } finally {
+      if (cameraBtn) cameraBtn.style.display = '';
+    }
+  };
+
+  const handleDownloadImage = async () => {
+    if (!cardRef.current) return;
+    setIsGenerating(true);
+    setGeneratingType('image');
+    setAvatarError(null);
+    try {
+      const canvas = await getCardCanvas();
+      if (!canvas) throw new Error('Gagal memproses kartu KTA.');
+      
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const safeName = (volunteer.fullName || 'Relawan').trim().replace(/[^a-zA-Z0-9]/g, '_');
+      
+      const link = document.createElement('a');
+      link.download = `KTA-Relawan-Hadji-Abdul-Muis-${safeName}.png`;
+      link.href = imgData;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Gagal download file KTA:', err);
+      setAvatarError('Gagal mendownload file gambar KTA. Silakan coba lagi.');
+    } finally {
+      setIsGenerating(false);
+      setGeneratingType(null);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!cardRef.current) return;
+    setIsGenerating(true);
+    setGeneratingType('pdf');
+    setAvatarError(null);
+    try {
+      const canvas = await getCardCanvas();
+      if (!canvas) throw new Error('Gagal memproses kartu KTA.');
+
       const imgData = canvas.toDataURL('image/png', 1.0);
       
-      // Standard ID Card dimension: 90mm x 58mm (matching landscape CR80 aspect ratio)
+      // Standard ID Card dimension: 85.6mm x 54mm (CR80 standard)
+      // Exact ID card dimensions - no full page margins, no surrounding webpage
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
-        format: [90, 58]
+        format: [85.6, 54]
       });
 
-      pdf.addImage(imgData, 'PNG', 0, 0, 90, 58);
+      pdf.addImage(imgData, 'PNG', 0, 0, 85.6, 54);
       const safeName = (volunteer.fullName || 'Relawan').trim().replace(/[^a-zA-Z0-9]/g, '_');
-      pdf.save(`KTA-Relawan-PARAMIS-${safeName}.pdf`);
+      pdf.save(`KTA-Relawan-Hadji-Abdul-Muis-${safeName}.pdf`);
     } catch (err) {
-      console.error('Gagal generate PDF KTA, menggunakan dialog cetak:', err);
-      window.print();
+      console.error('Gagal generate PDF KTA:', err);
+      setAvatarError('Gagal mendownload file PDF KTA. Silakan coba lagi.');
     } finally {
-      setIsGeneratingPdf(false);
+      setIsGenerating(false);
+      setGeneratingType(null);
     }
   };
 
@@ -118,34 +167,36 @@ export const VolunteerKtaCard: React.FC<VolunteerKtaCardProps> = ({
           <ShieldCheck className="w-40 h-40" />
         </div>
 
-        {/* Card Header */}
-        <div className="flex justify-between items-start border-b border-white/20 pb-2.5 gap-2">
-          <div className="flex items-center gap-2">
+        {/* Card Header: Strictly single line KARTU TANDA ANGGOTA RELAWAN */}
+        <div className="flex justify-between items-center border-b border-white/20 pb-2.5 gap-2">
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <ParamisLogo variant="white" size="xs" />
-            <div className="flex flex-col justify-center">
-              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-white leading-tight block">
+            <div className="min-w-0">
+              <span className="text-[9.5px] xs:text-[10.5px] sm:text-[12px] font-black uppercase tracking-wider text-white whitespace-nowrap leading-none block">
                 KARTU TANDA ANGGOTA RELAWAN
               </span>
-              <span className="text-[8.5px] sm:text-[9.5px] text-blue-200 leading-tight font-medium block mt-0.5">
+              <span className="text-[8px] sm:text-[9px] text-blue-200 whitespace-nowrap leading-tight font-medium block mt-1">
                 Yayasan Prakarsa Hadji Abdul Muis
               </span>
             </div>
           </div>
 
-          {/* Status Badge: only show when formally approved or rejected; 'MENUNGGU ACC ADMIN' removed */}
-          <div className="text-right shrink-0">
-            {isApproved ? (
-              <span className="text-[9px] px-2.5 py-1 rounded-full bg-emerald-400/25 text-emerald-200 border border-emerald-400/40 font-bold inline-flex items-center gap-1 shadow-xs">
-                <CheckCircle2 className="w-3 h-3 text-emerald-300" />
-                RESMI DI-ACC
-              </span>
-            ) : isRejected ? (
-              <span className="text-[9px] px-2.5 py-1 rounded-full bg-rose-500/25 text-rose-300 border border-rose-400/40 font-bold inline-flex items-center gap-1 shadow-xs">
-                <XCircle className="w-3 h-3 text-rose-300" />
-                DITOLAK
-              </span>
-            ) : null}
-          </div>
+          {/* Status Badge: only show when formally approved or rejected */}
+          {(isApproved || isRejected) && (
+            <div className="text-right shrink-0">
+              {isApproved ? (
+                <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-400/25 text-emerald-200 border border-emerald-400/40 font-bold inline-flex items-center gap-1 shadow-xs whitespace-nowrap">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-300" />
+                  RESMI DI-ACC
+                </span>
+              ) : (
+                <span className="text-[9px] px-2 py-0.5 rounded-full bg-rose-500/25 text-rose-300 border border-rose-400/40 font-bold inline-flex items-center gap-1 shadow-xs whitespace-nowrap">
+                  <XCircle className="w-3 h-3 text-rose-300" />
+                  DITOLAK
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Card Body: Photo & Profile Details */}
@@ -157,6 +208,7 @@ export const VolunteerKtaCard: React.FC<VolunteerKtaCardProps> = ({
                 <img 
                   src={volunteer.avatarUrl} 
                   alt={volunteer.fullName}
+                  crossOrigin="anonymous"
                   className="w-full h-full object-cover"
                 />
               ) : (
@@ -166,9 +218,10 @@ export const VolunteerKtaCard: React.FC<VolunteerKtaCardProps> = ({
               )}
             </div>
 
-            {/* Change Photo Overlay Button on Card */}
+            {/* Change Photo Overlay Button on Card (hidden during download) */}
             {allowEditPhoto && (
               <button
+                data-kta-camera-btn="true"
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
@@ -238,36 +291,50 @@ export const VolunteerKtaCard: React.FC<VolunteerKtaCardProps> = ({
         </div>
       </div>
 
-      {/* Primary KTA Action Buttons: Download PDF & Cetak */}
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={handleDownloadPdf}
-          disabled={isGeneratingPdf}
-          className="flex-1 py-2.5 px-3 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] active:scale-98 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
-        >
-          {isGeneratingPdf ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Membuat PDF KTA...</span>
-            </>
-          ) : (
-            <>
-              <FileDown className="w-4 h-4" />
-              <span>Download PDF KTA</span>
-            </>
-          )}
-        </button>
+      {/* Primary KTA Action Buttons: Download File Gambar KTA & PDF KTA (Tanpa Kertas/Halaman Lain) */}
+      <div className="space-y-1.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={handleDownloadImage}
+            disabled={isGenerating}
+            className="py-2.5 px-3.5 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] active:scale-98 text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+          >
+            {isGenerating && generatingType === 'image' ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Menyiapkan Gambar...</span>
+              </>
+            ) : (
+              <>
+                <ImageDown className="w-4 h-4" />
+                <span>Download File KTA (PNG)</span>
+              </>
+            )}
+          </button>
 
-        <button
-          type="button"
-          onClick={handlePrintCard}
-          title="Cetak KTA"
-          className="py-2.5 px-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-98"
-        >
-          <Printer className="w-4 h-4 text-slate-600 dark:text-slate-300" />
-          <span className="hidden sm:inline">Cetak</span>
-        </button>
+          <button
+            type="button"
+            onClick={handleDownloadPdf}
+            disabled={isGenerating}
+            className="py-2.5 px-3.5 rounded-xl border border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 dark:hover:bg-blue-900/60 text-[#060ee3] dark:text-blue-300 text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+          >
+            {isGenerating && generatingType === 'pdf' ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Menyiapkan PDF...</span>
+              </>
+            ) : (
+              <>
+                <FileDown className="w-4 h-4" />
+                <span>Download PDF KTA</span>
+              </>
+            )}
+          </button>
+        </div>
+        <p className="text-[10px] text-slate-500 dark:text-slate-400 text-center font-medium">
+          Hanya mengunduh file kartu KTA saja (tanpa halaman website atau keterangan lain).
+        </p>
       </div>
 
       {/* Upload photo note & quick action button if allowed */}
