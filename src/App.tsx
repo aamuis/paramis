@@ -25,7 +25,7 @@ import { CampaignList } from './components/CampaignList';
 import { AboutFoundation } from './components/AboutFoundation';
 import { DonationModal } from './components/DonationModal';
 import { VolunteerModal } from './components/VolunteerModal';
-import { VolunteerKtaCard } from './components/VolunteerKtaCard';
+import { MyVolunteerKtaModal } from './components/MyVolunteerKtaModal';
 import { EmailNotificationModal } from './components/EmailNotificationModal';
 import { TransparencyModal } from './components/TransparencyModal';
 import { AdminDashboard } from './components/AdminDashboard';
@@ -52,7 +52,8 @@ import {
   MessageCircle,
   FileText,
   BookOpen,
-  GraduationCap
+  GraduationCap,
+  Lock
 } from 'lucide-react';
 import { ParamisLogo } from './components/ParamisLogo';
 
@@ -86,7 +87,7 @@ export function App() {
   const [isTransparencyModalOpen, setIsTransparencyModalOpen] = useState(false);
   const [isZakatCalculatorOpen, setIsZakatCalculatorOpen] = useState(false);
   const [isSocialAidModalOpen, setIsSocialAidModalOpen] = useState(false);
-  const [selectedVolunteerKta, setSelectedVolunteerKta] = useState<VolunteerApplicant | null>(null);
+  const [isMyKtaModalOpen, setIsMyKtaModalOpen] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState('');
 
   // Secret Admin Authentication State (Only owner knows PIN / secret triggers)
@@ -693,7 +694,7 @@ export function App() {
           {activeTab === 'volunteers' && (
             <div className="space-y-4 animate-in fade-in duration-300">
               {/* Volunteer Hero Card */}
-              <div className="p-4 rounded-3xl bg-gradient-to-br from-[#060ee3] to-[#040880] text-white space-y-2.5 shadow-md">
+              <div className="p-4 rounded-3xl bg-gradient-to-br from-[#060ee3] to-[#040880] text-white space-y-3 shadow-md">
                 <span className="text-[10px] font-bold tracking-wider uppercase text-blue-200">
                   Unit Relawan PARAMIS
                 </span>
@@ -701,17 +702,27 @@ export function App() {
                   Bergabung Menjadi Relawan Kemanusiaan
                 </h2>
                 <p className="text-xs text-blue-100 leading-relaxed">
-                  Jadilah garda terdepan aksi sosial kemanusiaan. Daftarkan diri Anda, upload foto profil, dan tim Admin Yayasan Prakarsa Hadji Abdul Muis akan meninjau dan meng-ACC penerbitan E-KTA resmi Anda.
+                  Jadilah garda terdepan aksi sosial kemanusiaan. Daftarkan diri Anda, upload foto profil, dan tim Admin Yayasan Prakarsa Hadji Abdul Muis akan meninjau dan memvalidasi penerbitan E-KTA resmi Anda.
                 </p>
 
-                <button
-                  id="btn-tab-register-volunteer"
-                  onClick={() => setIsVolunteerModalOpen(true)}
-                  className="w-full py-2.5 px-3 rounded-xl bg-white text-[#060ee3] font-bold text-xs shadow-sm hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                >
-                  <Users className="w-4 h-4" />
-                  <span>Daftar Relawan Sekarang (Proses ACC Admin)</span>
-                </button>
+                <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                  <button
+                    id="btn-tab-register-volunteer"
+                    onClick={() => setIsVolunteerModalOpen(true)}
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-white text-[#060ee3] font-bold text-xs shadow-sm hover:bg-blue-50 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Users className="w-4 h-4" />
+                    <span>Daftar Relawan Baru</span>
+                  </button>
+                  <button
+                    id="btn-tab-check-my-kta"
+                    onClick={() => setIsMyKtaModalOpen(true)}
+                    className="flex-1 py-2.5 px-3 rounded-xl bg-white/15 hover:bg-white/25 border border-white/30 text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                  >
+                    <Lock className="w-4 h-4" />
+                    <span>Akses KTA Saya (Khusus Pendaftar)</span>
+                  </button>
+                </div>
               </div>
 
               {/* Active Verified Volunteers List */}
@@ -721,11 +732,27 @@ export function App() {
                   <div className="space-y-2.5">
                     <div className="flex items-center justify-between text-xs px-1">
                       <h3 className="font-bold text-slate-900 dark:text-white">
-                        Relawan Resmi Terverifikasi ({approvedVolunteers.length})
+                        Daftar Relawan Terverifikasi ({approvedVolunteers.length})
                       </h3>
                       <span className="text-[10px] text-emerald-600 font-semibold">
                         Siaga Penugasan
                       </span>
+                    </div>
+
+                    {/* Privacy Notice: KTA is strictly for registrants only */}
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs">
+                      <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-400">
+                        <Lock className="w-4 h-4 text-[#060ee3] shrink-0" />
+                        <span>Kartu Tanda Anggota (KTA) bersifat rahasia dan hanya dapat diakses oleh pendaftar yang bersangkutan.</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsMyKtaModalOpen(true)}
+                        className="text-[11px] font-bold text-[#060ee3] dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1 shrink-0"
+                      >
+                        <span>Akses KTA Anda</span>
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
                     </div>
 
                     {approvedVolunteers.length === 0 ? (
@@ -736,17 +763,16 @@ export function App() {
                       approvedVolunteers.map((v) => (
                         <div
                           key={v.id}
-                          onClick={() => setSelectedVolunteerKta(v)}
-                          className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between gap-3 text-xs cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-all group"
+                          className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-xs flex items-center justify-between gap-3 text-xs"
                         >
                           {v.avatarUrl ? (
                             <img 
                               src={v.avatarUrl} 
                               alt={v.fullName} 
-                              className="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-200 dark:border-slate-700 group-hover:scale-105 transition-transform" 
+                              className="w-10 h-10 rounded-xl object-cover shrink-0 border border-slate-200 dark:border-slate-700" 
                             />
                           ) : (
-                            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 text-[#060ee3] dark:text-blue-300 font-bold flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950 text-[#060ee3] dark:text-blue-300 font-bold flex items-center justify-center shrink-0">
                               {v.fullName.slice(0, 2).toUpperCase()}
                             </div>
                           )}
@@ -756,21 +782,22 @@ export function App() {
                               <h5 className="font-bold text-slate-900 dark:text-white truncate">
                                 {v.fullName}
                               </h5>
-                              <span className="text-[9px] px-1.5 py-0.2 rounded-sm bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold">
-                                RESMI ACC
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-bold">
+                                RELAWAN AKTIF
                               </span>
                             </div>
-                            <p className="text-[10px] text-slate-500 truncate">
+                            <p className="text-[10px] text-slate-500 truncate mt-0.5">
                               {v.profession} • {v.city}
                             </p>
                           </div>
 
                           <div className="text-right shrink-0">
                             <span className="text-[9px] font-mono text-slate-400 block">
-                              {v.idCardNumber}
+                              {v.idCardNumber ? v.idCardNumber.slice(0, 11) + '****' : 'ID RELAWAN'}
                             </span>
-                            <span className="text-[10px] text-[#060ee3] dark:text-blue-400 font-medium group-hover:underline">
-                              Lihat KTA →
+                            <span className="text-[9px] px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-medium inline-flex items-center gap-1 mt-0.5">
+                              <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                              Terdaftar
                             </span>
                           </div>
                         </div>
@@ -959,40 +986,12 @@ export function App() {
           defaultCategory={selectedCategory !== 'semua' ? selectedCategory : 'bencana'}
         />
 
-        {/* E-KTA Detail Modal for Public / Active Volunteer */}
-        {selectedVolunteerKta && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in">
-            <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5 space-y-4 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                  Kartu Tanda Anggota (E-KTA) Relawan
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setSelectedVolunteerKta(null)}
-                  className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 cursor-pointer"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <VolunteerKtaCard 
-                volunteer={selectedVolunteerKta}
-                allowEditPhoto={false}
-              />
-
-              <div className="pt-2 text-center">
-                <button
-                  type="button"
-                  onClick={() => setSelectedVolunteerKta(null)}
-                  className="w-full py-2.5 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white text-xs font-bold transition-all cursor-pointer"
-                >
-                  Tutup
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* My Volunteer KTA Modal (Restricted to Registrant Only) */}
+        <MyVolunteerKtaModal
+          isOpen={isMyKtaModalOpen}
+          onClose={() => setIsMyKtaModalOpen(false)}
+          onOpenRegisterModal={() => setIsVolunteerModalOpen(true)}
+        />
 
         <EmailNotificationModal 
           isOpen={isEmailModalOpen}

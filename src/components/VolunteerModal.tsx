@@ -12,7 +12,8 @@ import {
   Camera,
   Upload,
   Trash2,
-  PenTool
+  PenTool,
+  Lock
 } from 'lucide-react';
 import { CampaignCategory, VolunteerApplicant } from '../types';
 import { registerVolunteer, updateVolunteerAvatar } from '../services/storage';
@@ -182,6 +183,12 @@ export const VolunteerModal: React.FC<VolunteerModalProps> = ({
         avatarUrl: avatarUrl || undefined
       });
       setIsProcessing(false);
+      try {
+        localStorage.setItem('paramis_my_volunteer_id', res.volunteer.id);
+        localStorage.setItem('paramis_my_volunteer_email', res.volunteer.email);
+      } catch {
+        // ignore
+      }
       setRegisteredResult(res);
     }, 600);
   };
@@ -648,9 +655,14 @@ export const VolunteerModal: React.FC<VolunteerModalProps> = ({
 
               {/* KARTU TANDA ANGGOTA (E-KTA) COMPONENT DENGAN FITUR UPLOAD FOTO LANGSUNG */}
               <div>
+                <div className="p-2.5 rounded-xl bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-900/40 text-[11px] text-blue-900 dark:text-blue-200 flex items-center gap-2 mb-2.5">
+                  <Lock className="w-3.5 h-3.5 text-[#060ee3] shrink-0" />
+                  <span>KTA ini bersifat privat khusus untuk Anda sebagai pendaftar. Data dan kartu Anda tidak dapat diakses atau dilihat oleh orang umum.</span>
+                </div>
+
                 <div className="flex items-center justify-between mb-2">
                   <h5 className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Preview Kartu Tanda Anggota (E-KTA) Relawan:
+                    Kartu Tanda Anggota (E-KTA) Anda:
                   </h5>
                   <span className="text-[10px] text-blue-600 dark:text-blue-400 font-medium">
                     Bisa ganti foto langsung di kartu

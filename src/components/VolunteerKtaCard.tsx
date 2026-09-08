@@ -4,8 +4,6 @@ import {
   QrCode, 
   Camera, 
   Upload, 
-  CheckCircle2, 
-  XCircle, 
   MapPin, 
   Briefcase,
   Sparkles,
@@ -112,35 +110,6 @@ const renderKtaToCanvasFallback = async (volunteer: VolunteerApplicant): Promise
   ctx.fillStyle = '#bfdbfe';
   ctx.font = '500 16px system-ui, sans-serif';
   ctx.fillText('Yayasan Prakarsa Hadji Abdul Muis', 105, 72);
-
-  // Status badge
-  const isApproved = volunteer.status === 'approved';
-  const isRejected = volunteer.status === 'rejected';
-  if (isApproved) {
-    drawRoundedRect(ctx, width - 210, 36, 170, 34, 17);
-    ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(52, 211, 153, 0.6)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    ctx.fillStyle = '#a7f3d0';
-    ctx.font = 'bold 14px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('✓ RESMI DI-ACC', width - 125, 58);
-  } else if (isRejected) {
-    drawRoundedRect(ctx, width - 180, 36, 140, 34, 17);
-    ctx.fillStyle = 'rgba(239, 68, 68, 0.3)';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(248, 113, 113, 0.6)';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    ctx.fillStyle = '#fca5a5';
-    ctx.font = 'bold 14px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('✕ DITOLAK', width - 110, 58);
-  }
 
   // Header divider
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
@@ -315,9 +284,6 @@ export const VolunteerKtaCard: React.FC<VolunteerKtaCardProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingType, setGeneratingType] = useState<'image' | 'pdf' | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
-
-  const isApproved = volunteer.status === 'approved';
-  const isRejected = volunteer.status === 'rejected';
 
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -503,22 +469,13 @@ export const VolunteerKtaCard: React.FC<VolunteerKtaCardProps> = ({
             </div>
           </div>
 
-          {/* Status Badge: only show when formally approved or rejected */}
-          {(isApproved || isRejected) && (
-            <div className="text-right shrink-0">
-              {isApproved ? (
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-emerald-400/25 text-emerald-200 border border-emerald-400/40 font-bold inline-flex items-center gap-1 shadow-xs whitespace-nowrap">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-300" />
-                  RESMI DI-ACC
-                </span>
-              ) : (
-                <span className="text-[9px] px-2 py-0.5 rounded-full bg-rose-500/25 text-rose-300 border border-rose-400/40 font-bold inline-flex items-center gap-1 shadow-xs whitespace-nowrap">
-                  <XCircle className="w-3 h-3 text-rose-300" />
-                  DITOLAK
-                </span>
-              )}
-            </div>
-          )}
+          {/* Official Card Seal / Watermark Chip */}
+          <div className="text-right shrink-0">
+            <span className="text-[8px] xs:text-[9px] px-2 py-0.5 rounded-full bg-white/10 text-blue-100 border border-white/20 font-medium inline-flex items-center gap-1 shadow-xs whitespace-nowrap">
+              <ShieldCheck className="w-3 h-3 text-blue-300" />
+              E-KTA RESMI
+            </span>
+          </div>
         </div>
 
         {/* Card Body: Photo & Profile Details */}
