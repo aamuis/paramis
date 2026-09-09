@@ -99,12 +99,7 @@ export const INITIAL_CMS_CONFIG: CmsConfig = {
   qrisMerchantName: "PRCRSA HADJI ABDUL MUIS",
   qrisNmid: "ID1026589758873",
   qrisImageUrl: "/qris-prcrsa-hadji-abdul-muis.svg",
-  bankAccounts: [
-    { bank: "Bank Syariah Indonesia (BSI)", accountNumber: "7188 9090 12", accountName: "Yayasan Prakarsa Hadji Abdul Muis", notes: "KCP Jakarta Pusat", isActive: true },
-    { bank: "Bank Central Asia (BCA)", accountNumber: "5420 891 002", accountName: "Yayasan Prakarsa Hadji Abdul Muis", notes: "KCU Thamrin", isActive: true },
-    { bank: "Bank Mandiri", accountNumber: "123 00 9871 2234", accountName: "Yayasan Hadji Abdul Muis Donasi", notes: "Cabang Sudirman", isActive: true },
-    { bank: "Bank Rakyat Indonesia (BRI)", accountNumber: "0341 01 002931 538", accountName: "PARAMIS FOUNDATION", notes: "Unit Veteran", isActive: true }
-  ]
+  bankAccounts: []
 };
 
 export const INITIAL_SERVICES: ServiceItem[] = [

@@ -315,6 +315,18 @@ function applyCmsMigrations(input: CmsConfig): { config: CmsConfig; changed: boo
     changed = true;
   }
 
+  if (config.bankAccounts && Array.isArray(config.bankAccounts)) {
+    const dummyNumbers = new Set(['7188 9090 12', '5420 891 002', '123 00 9871 2234', '0341 01 002931 538']);
+    const hasDummy = config.bankAccounts.some(acc => dummyNumbers.has(acc.accountNumber));
+    if (hasDummy) {
+      config.bankAccounts = config.bankAccounts.filter(acc => !dummyNumbers.has(acc.accountNumber));
+      changed = true;
+    }
+  } else {
+    config.bankAccounts = [];
+    changed = true;
+  }
+
   return { config, changed };
 }
 
@@ -560,6 +572,12 @@ export function createDonationTransaction(input: {
   paymentMethod: PaymentMethodType;
   isAnonymous: boolean;
   prayerMessage: string;
+  bankAccountDetails?: {
+    bank: string;
+    accountNumber: string;
+    accountName: string;
+    notes?: string;
+  };
 }): { transaction: DonationTransaction; paymentDetails: { code: string; label: string } } {
   const campaign = cache.campaigns.find(c => c.id === input.campaignId);
   const campaignTitle = campaign ? campaign.title : 'Donasi Umum PARAMIS FOUNDATION';
@@ -575,46 +593,51 @@ export function createDonationTransaction(input: {
   let paymentCode = '';
   let paymentChannelName = '';
 
-  switch (input.paymentMethod) {
-    case 'qris':
-      paymentChannelName = 'QRIS Real-Time Interaktif';
-      paymentCode = `00020101021226580014ID.CO.QRIS.PARAMIS.FOUNDATION.${Date.now()}`;
-      break;
-    case 'va_bca':
-      paymentChannelName = 'BCA Virtual Account';
-      paymentCode = `8271${input.donorPhone.replace(/\D/g, '').slice(-8) || '10293847'}`;
-      break;
-    case 'va_mandiri':
-      paymentChannelName = 'Mandiri Virtual Account';
-      paymentCode = `8890${input.donorPhone.replace(/\D/g, '').slice(-8) || '55443322'}`;
-      break;
-    case 'va_bri':
-      paymentChannelName = 'BRI Virtual Account';
-      paymentCode = `1280${input.donorPhone.replace(/\D/g, '').slice(-8) || '99887766'}`;
-      break;
-    case 'va_bni':
-      paymentChannelName = 'BNI Virtual Account';
-      paymentCode = `9881${input.donorPhone.replace(/\D/g, '').slice(-8) || '44332211'}`;
-      break;
-    case 'gopay':
-      paymentChannelName = 'GoPay';
-      paymentCode = `GP-PRM-${randomSuffix}`;
-      break;
-    case 'ovo':
-      paymentChannelName = 'OVO';
-      paymentCode = `OVO-PRM-${randomSuffix}`;
-      break;
-    case 'dana':
-      paymentChannelName = 'DANA';
-      paymentCode = `DANA-PRM-${randomSuffix}`;
-      break;
-    case 'shopeepay':
-      paymentChannelName = 'ShopeePay';
-      paymentCode = `SP-PRM-${randomSuffix}`;
-      break;
-    default:
-      paymentChannelName = 'Transfer Bank Manual';
-      paymentCode = '7188 9090 12 (BSI)';
+  if (input.bankAccountDetails) {
+    paymentChannelName = input.bankAccountDetails.bank;
+    paymentCode = input.bankAccountDetails.accountNumber;
+  } else {
+    switch (input.paymentMethod) {
+      case 'qris':
+        paymentChannelName = 'QRIS Real-Time Interaktif';
+        paymentCode = `00020101021226580014ID.CO.QRIS.PARAMIS.FOUNDATION.${Date.now()}`;
+        break;
+      case 'va_bca':
+        paymentChannelName = 'BCA Virtual Account';
+        paymentCode = `8271${input.donorPhone.replace(/\D/g, '').slice(-8) || '10293847'}`;
+        break;
+      case 'va_mandiri':
+        paymentChannelName = 'Mandiri Virtual Account';
+        paymentCode = `8890${input.donorPhone.replace(/\D/g, '').slice(-8) || '55443322'}`;
+        break;
+      case 'va_bri':
+        paymentChannelName = 'BRI Virtual Account';
+        paymentCode = `1280${input.donorPhone.replace(/\D/g, '').slice(-8) || '99887766'}`;
+        break;
+      case 'va_bni':
+        paymentChannelName = 'BNI Virtual Account';
+        paymentCode = `9881${input.donorPhone.replace(/\D/g, '').slice(-8) || '44332211'}`;
+        break;
+      case 'gopay':
+        paymentChannelName = 'GoPay';
+        paymentCode = `GP-PRM-${randomSuffix}`;
+        break;
+      case 'ovo':
+        paymentChannelName = 'OVO';
+        paymentCode = `OVO-PRM-${randomSuffix}`;
+        break;
+      case 'dana':
+        paymentChannelName = 'DANA';
+        paymentCode = `DANA-PRM-${randomSuffix}`;
+        break;
+      case 'shopeepay':
+        paymentChannelName = 'ShopeePay';
+        paymentCode = `SP-PRM-${randomSuffix}`;
+        break;
+      default:
+        paymentChannelName = 'Transfer Bank Manual';
+        paymentCode = '-';
+    }
   }
 
   const transaction: DonationTransaction = {
@@ -635,7 +658,8 @@ export function createDonationTransaction(input: {
     isAnonymous: input.isAnonymous,
     prayerMessage: input.prayerMessage,
     createdAt: now.toISOString(),
-    receiptNumber
+    receiptNumber,
+    bankAccountDetails: input.bankAccountDetails
   };
 
   cache.transactions = [transaction, ...cache.transactions];

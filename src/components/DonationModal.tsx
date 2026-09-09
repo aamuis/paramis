@@ -43,6 +43,8 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   cmsConfig: propCmsConfig
 }) => {
   const currentCmsConfig = propCmsConfig || getCmsConfig();
+  const activeBankAccounts = (currentCmsConfig.bankAccounts || []).filter(acc => acc.isActive !== false);
+
   const [step, setStep] = useState<'form' | 'payment' | 'success'>('form');
   const [selectedAmount, setSelectedAmount] = useState<number>(100000);
   const [customAmount, setCustomAmount] = useState<string>('');
@@ -53,9 +55,11 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const [prayerMessage, setPrayerMessage] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('qris');
+  const [selectedBankIndex, setSelectedBankIndex] = useState<number | null>(null);
 
   const [createdTransaction, setCreatedTransaction] = useState<DonationTransaction | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedAmount, setCopiedAmount] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
@@ -74,6 +78,12 @@ export const DonationModal: React.FC<DonationModalProps> = ({
       return;
     }
 
+    const selectedBank = (paymentMethod === 'bank_transfer' && selectedBankIndex !== null)
+      ? activeBankAccounts[selectedBankIndex]
+      : (paymentMethod === 'bank_transfer' && activeBankAccounts.length > 0)
+        ? activeBankAccounts[0]
+        : undefined;
+
     const res = createDonationTransaction({
       campaignId: campaign ? campaign.id : 'camp-general',
       donorName: isAnonymous ? 'Hamba Allah' : donorName,
@@ -82,7 +92,8 @@ export const DonationModal: React.FC<DonationModalProps> = ({
       amount: currentAmount,
       paymentMethod,
       isAnonymous,
-      prayerMessage
+      prayerMessage,
+      bankAccountDetails: selectedBank
     });
 
     setCreatedTransaction(res.transaction);
@@ -304,14 +315,16 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               {/* Payment Method Selector */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                  Pilih Metode Pembayaran Digital
+                  Pilih Metode Pembayaran
                 </label>
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="space-y-2 text-xs">
+                  {/* QRIS Option */}
                   <label 
-                    className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all ${
+                    id="opt-payment-qris"
+                    className={`flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition-all ${
                       paymentMethod === 'qris' 
-                        ? 'border-[#060ee3] bg-blue-50/70 dark:bg-blue-950/50 font-bold text-[#060ee3] dark:text-blue-300' 
-                        : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                        ? 'border-[#060ee3] bg-blue-50/70 dark:bg-blue-950/50 font-bold text-[#060ee3] dark:text-blue-300 ring-2 ring-[#060ee3]/20 shadow-xs' 
+                        : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200'
                     }`}
                   >
                     <input 
@@ -319,69 +332,73 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                       name="payment_method" 
                       value="qris"
                       checked={paymentMethod === 'qris'}
-                      onChange={() => setPaymentMethod('qris')}
+                      onChange={() => {
+                        setPaymentMethod('qris');
+                        setSelectedBankIndex(null);
+                      }}
                       className="text-[#060ee3]"
                     />
-                    <QrCode className="w-4 h-4 text-[#060ee3]" />
-                    <span className="truncate">QRIS (Semua Bank/E-Wallet)</span>
+                    <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-[#060ee3] dark:text-blue-300 shrink-0">
+                      <QrCode className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-bold text-xs text-slate-900 dark:text-white">QRIS (Semua Bank & E-Wallet)</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">
+                        BCA, Mandiri, BRI, BNI, BSI, GoPay, OVO, DANA, ShopeePay
+                      </div>
+                    </div>
                   </label>
 
-                  <label 
-                    className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all ${
-                      paymentMethod === 'va_bca' 
-                        ? 'border-[#060ee3] bg-blue-50/70 dark:bg-blue-950/50 font-bold text-[#060ee3] dark:text-blue-300' 
-                        : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <input 
-                      type="radio" 
-                      name="payment_method" 
-                      value="va_bca"
-                      checked={paymentMethod === 'va_bca'}
-                      onChange={() => setPaymentMethod('va_bca')}
-                      className="text-[#060ee3]"
-                    />
-                    <CreditCard className="w-4 h-4 text-blue-600" />
-                    <span>BCA Virtual Account</span>
-                  </label>
+                  {/* Rekening Bank & E-Wallet yang ditambahkan Admin */}
+                  {activeBankAccounts.length > 0 && (
+                    <div className="space-y-2 pt-1">
+                      <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-0.5">
+                        Transfer Rekening Resmi Yayasan
+                      </div>
+                      {activeBankAccounts.map((acc, idx) => {
+                        const isSelected = paymentMethod === 'bank_transfer' && selectedBankIndex === idx;
+                        const isEWallet = /gopay|dana|ovo|shopee|linkaja|dompet/i.test(acc.bank);
 
-                  <label 
-                    className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all ${
-                      paymentMethod === 'va_mandiri' 
-                        ? 'border-[#060ee3] bg-blue-50/70 dark:bg-blue-950/50 font-bold text-[#060ee3] dark:text-blue-300' 
-                        : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <input 
-                      type="radio" 
-                      name="payment_method" 
-                      value="va_mandiri"
-                      checked={paymentMethod === 'va_mandiri'}
-                      onChange={() => setPaymentMethod('va_mandiri')}
-                      className="text-[#060ee3]"
-                    />
-                    <Building2 className="w-4 h-4 text-amber-600" />
-                    <span>Mandiri Virtual Acc</span>
-                  </label>
-
-                  <label 
-                    className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all ${
-                      paymentMethod === 'gopay' 
-                        ? 'border-[#060ee3] bg-blue-50/70 dark:bg-blue-950/50 font-bold text-[#060ee3] dark:text-blue-300' 
-                        : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <input 
-                      type="radio" 
-                      name="payment_method" 
-                      value="gopay"
-                      checked={paymentMethod === 'gopay'}
-                      onChange={() => setPaymentMethod('gopay')}
-                      className="text-[#060ee3]"
-                    />
-                    <Wallet className="w-4 h-4 text-emerald-600" />
-                    <span>GoPay / DANA E-Wallet</span>
-                  </label>
+                        return (
+                          <label 
+                            key={idx}
+                            id={`opt-payment-bank-${idx}`}
+                            className={`flex items-center gap-3 p-3 rounded-2xl border cursor-pointer transition-all ${
+                              isSelected 
+                                ? 'border-[#060ee3] bg-blue-50/70 dark:bg-blue-950/50 font-bold text-[#060ee3] dark:text-blue-300 ring-2 ring-[#060ee3]/20 shadow-xs' 
+                                : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200'
+                            }`}
+                          >
+                            <input 
+                              type="radio" 
+                              name="payment_method" 
+                              value={`bank_${idx}`}
+                              checked={isSelected}
+                              onChange={() => {
+                                setPaymentMethod('bank_transfer');
+                                setSelectedBankIndex(idx);
+                              }}
+                              className="text-[#060ee3]"
+                            />
+                            <div className="p-2 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 shrink-0">
+                              {isEWallet ? <Wallet className="w-5 h-5" /> : <Building2 className="w-5 h-5" />}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-bold text-xs text-slate-900 dark:text-white">{acc.bank}</div>
+                              <div className="text-[11px] text-slate-600 dark:text-slate-300 font-mono font-semibold">
+                                {acc.accountNumber} <span className="font-sans font-normal text-slate-500 dark:text-slate-400">• a.n. {acc.accountName}</span>
+                              </div>
+                              {acc.notes && (
+                                <div className="text-[10px] text-slate-400 font-normal truncate">
+                                  {acc.notes}
+                                </div>
+                              )}
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -503,24 +520,66 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3">
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-slate-500">Kanal Pembayaran:</span>
-                    <span className="font-bold text-slate-800 dark:text-white">{createdTransaction.paymentChannelName}</span>
+                    <span className="font-bold text-slate-800 dark:text-white flex items-center gap-1.5">
+                      <Building2 className="w-3.5 h-3.5 text-[#060ee3]" />
+                      <span>{createdTransaction.paymentChannelName}</span>
+                    </span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] text-slate-500">Nomor Rekening / Kode VA</span>
-                      <div className="text-base font-mono font-bold text-slate-900 dark:text-white">
-                        {createdTransaction.paymentCode}
-                      </div>
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                        Nomor Rekening Tujuan
+                      </span>
+                      <button
+                        type="button"
+                        id="btn-copy-account-num"
+                        onClick={() => copyToClipboard(createdTransaction.bankAccountDetails?.accountNumber || createdTransaction.paymentCode)}
+                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#060ee3] hover:bg-[#050cc0] text-white text-[11px] font-bold cursor-pointer transition-all active:scale-95"
+                      >
+                        {copiedCode ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                        <span>{copiedCode ? 'Nomor Disalin' : 'Salin Nomor'}</span>
+                      </button>
                     </div>
 
+                    <div className="text-lg font-mono font-black text-slate-900 dark:text-white tracking-wide">
+                      {createdTransaction.bankAccountDetails?.accountNumber || createdTransaction.paymentCode}
+                    </div>
+
+                    {createdTransaction.bankAccountDetails?.accountName && (
+                      <div className="text-xs text-slate-600 dark:text-slate-400 pt-1 border-t border-slate-200 dark:border-slate-800">
+                        Atas Nama: <strong className="text-slate-800 dark:text-white font-bold">{createdTransaction.bankAccountDetails.accountName}</strong>
+                      </div>
+                    )}
+
+                    {createdTransaction.bankAccountDetails?.notes && (
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        Catatan / Cabang: {createdTransaction.bankAccountDetails.notes}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Transfer Amount Reminder with Copy Amount */}
+                  <div className="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-blue-700 dark:text-blue-300 font-medium block">
+                        Jumlah Transfer Pas (Termasuk Kode Unik)
+                      </span>
+                      <span className="text-sm font-mono font-bold text-[#060ee3] dark:text-blue-400">
+                        Rp {createdTransaction.totalAmount.toLocaleString('id-ID')}
+                      </span>
+                    </div>
                     <button
                       type="button"
-                      onClick={() => copyToClipboard(createdTransaction.paymentCode)}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#060ee3] text-white text-xs font-semibold cursor-pointer"
+                      id="btn-copy-amount"
+                      onClick={() => {
+                        navigator.clipboard.writeText(createdTransaction.totalAmount.toString());
+                        setCopiedAmount(true);
+                        setTimeout(() => setCopiedAmount(false), 2000);
+                      }}
+                      className="text-[11px] font-bold text-[#060ee3] dark:text-blue-400 hover:underline cursor-pointer"
                     >
-                      {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedCode ? 'Disalin' : 'Salin'}</span>
+                      {copiedAmount ? 'Jumlah Disalin' : 'Salin Jumlah'}
                     </button>
                   </div>
                 </div>

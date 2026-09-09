@@ -95,6 +95,12 @@ export interface DonationTransaction {
   createdAt: string;
   verifiedAt?: string;
   receiptNumber: string;
+  bankAccountDetails?: {
+    bank: string;
+    accountNumber: string;
+    accountName: string;
+    notes?: string;
+  };
 }
 
 export interface VolunteerApplicant {

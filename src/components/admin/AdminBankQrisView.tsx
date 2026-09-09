@@ -32,12 +32,17 @@ interface AdminBankQrisViewProps {
 }
 
 const POPULAR_BANKS = [
-  'Bank Syariah Indonesia (BSI)',
-  'Bank Rakyat Indonesia (BRI)',
   'Bank Central Asia (BCA)',
   'Bank Mandiri',
+  'Bank Rakyat Indonesia (BRI)',
   'Bank Negara Indonesia (BNI)',
+  'Bank Syariah Indonesia (BSI)',
   'Bank Muamalat',
+  'GoPay / GoTo Financial',
+  'DANA (Dompet Digital)',
+  'OVO (Payment)',
+  'ShopeePay',
+  'LinkAja',
   'Bank Jabar Banten (BJB / BJB Syariah)',
   'Bank CIMB Niaga / Syariah',
   'Bank Permata Syariah',
@@ -437,96 +442,108 @@ export const AdminBankQrisView: React.FC<AdminBankQrisViewProps> = ({
           <span className="text-[10px] text-slate-500">Donatur dapat memilih bank ini saat donasi</span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {bankAccounts.map((acc, idx) => {
-            const isActive = acc.isActive !== false;
+        {bankAccounts.length === 0 ? (
+          <div className="p-8 rounded-3xl bg-slate-50 dark:bg-slate-900/40 border-2 border-dashed border-slate-200 dark:border-slate-700/80 text-center space-y-2">
+            <Building2 className="w-8 h-8 text-slate-400 mx-auto" />
+            <h4 className="text-xs font-bold text-slate-700 dark:text-slate-200">
+              Belum ada rekening bank yang ditambahkan
+            </h4>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+              Daftar rekening bank pada formulir donasi saat ini kosong. Klik tombol <strong>"+ Tambah Rekening"</strong> di atas untuk menambahkan rekening bank (BCA, Mandiri, BRI, BSI, dll) atau E-Wallet yang akan tampil pada formulir donasi.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {bankAccounts.map((acc, idx) => {
+              const isActive = acc.isActive !== false;
 
-            return (
-              <div
-                key={idx}
-                className={`p-4 rounded-3xl bg-white dark:bg-slate-800 border transition-all space-y-3 shadow-xs relative ${
-                  isActive 
-                    ? 'border-slate-200 dark:border-slate-700' 
-                    : 'border-slate-200 dark:border-slate-700 opacity-60 bg-slate-50'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/80 text-[#060ee3] dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0 border border-blue-100 dark:border-blue-900">
-                      <Building2 className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <h4 className="font-bold text-xs text-slate-900 dark:text-white">
-                          {acc.bank}
-                        </h4>
-                        {!isActive && (
-                          <span className="px-1.5 py-0.2 rounded-md bg-slate-200 text-slate-600 text-[8px] font-bold uppercase">
-                            Nonaktif
-                          </span>
-                        )}
+              return (
+                <div
+                  key={idx}
+                  className={`p-4 rounded-3xl bg-white dark:bg-slate-800 border transition-all space-y-3 shadow-xs relative ${
+                    isActive 
+                      ? 'border-slate-200 dark:border-slate-700' 
+                      : 'border-slate-200 dark:border-slate-700 opacity-60 bg-slate-50'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/80 text-[#060ee3] dark:text-blue-400 flex items-center justify-center font-bold text-xs shrink-0 border border-blue-100 dark:border-blue-900">
+                        <Building2 className="w-4 h-4" />
                       </div>
-                      <span className="text-[10px] text-slate-500 block">
-                        a/n {acc.accountName}
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="font-bold text-xs text-slate-900 dark:text-white">
+                            {acc.bank}
+                          </h4>
+                          {!isActive && (
+                            <span className="px-1.5 py-0.2 rounded-md bg-slate-200 text-slate-600 text-[8px] font-bold uppercase">
+                              Nonaktif
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-[10px] text-slate-500 block">
+                          a/n {acc.accountName}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Delete button */}
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteBank(idx)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer transition-colors"
+                      title="Hapus Rekening"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Account Number Box */}
+                  <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/80 flex items-center justify-between">
+                    <div>
+                      <span className="text-[9px] uppercase tracking-wider text-slate-400 block">
+                        Nomor Rekening:
+                      </span>
+                      <span className="font-mono font-bold text-sm text-[#060ee3] dark:text-blue-400 tracking-wide">
+                        {acc.accountNumber}
                       </span>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(acc.accountNumber.replace(/\s+/g, ''), idx)}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-[#060ee3] dark:text-blue-300 text-[11px] font-bold border border-blue-200 dark:border-blue-900 cursor-pointer"
+                    >
+                      {copiedIdx === idx ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedIdx === idx ? 'Disalin' : 'Salin'}</span>
+                    </button>
                   </div>
 
-                  {/* Delete button */}
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteBank(idx)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 cursor-pointer transition-colors"
-                    title="Hapus Rekening"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                  {acc.notes && (
+                    <p className="text-[10px] text-slate-500 italic">
+                      Catatan: {acc.notes}
+                    </p>
+                  )}
 
-                {/* Account Number Box */}
-                <div className="p-2.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/80 flex items-center justify-between">
-                  <div>
-                    <span className="text-[9px] uppercase tracking-wider text-slate-400 block">
-                      Nomor Rekening:
-                    </span>
-                    <span className="font-mono font-bold text-sm text-[#060ee3] dark:text-blue-400 tracking-wide">
-                      {acc.accountNumber}
-                    </span>
+                  {/* Status Switch */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-700/60 text-[11px]">
+                    <span className="text-slate-500">Status untuk Donatur:</span>
+                    <button
+                      type="button"
+                      onClick={() => handleToggleBankActive(idx)}
+                      className={`font-semibold cursor-pointer ${
+                        isActive ? 'text-emerald-600 hover:underline' : 'text-slate-400 hover:underline'
+                      }`}
+                    >
+                      {isActive ? '● Aktif (Ditampilkan)' : '○ Disembunyikan'}
+                    </button>
                   </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(acc.accountNumber.replace(/\s+/g, ''), idx)}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/60 hover:bg-blue-100 text-[#060ee3] dark:text-blue-300 text-[11px] font-bold border border-blue-200 dark:border-blue-900 cursor-pointer"
-                  >
-                    {copiedIdx === idx ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedIdx === idx ? 'Disalin' : 'Salin'}</span>
-                  </button>
                 </div>
-
-                {acc.notes && (
-                  <p className="text-[10px] text-slate-500 italic">
-                    Catatan: {acc.notes}
-                  </p>
-                )}
-
-                {/* Status Switch */}
-                <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-slate-700/60 text-[11px]">
-                  <span className="text-slate-500">Status untuk Donatur:</span>
-                  <button
-                    type="button"
-                    onClick={() => handleToggleBankActive(idx)}
-                    className={`font-semibold cursor-pointer ${
-                      isActive ? 'text-emerald-600 hover:underline' : 'text-slate-400 hover:underline'
-                    }`}
-                  >
-                    {isActive ? '● Aktif (Ditampilkan)' : '○ Disembunyikan'}
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* SECTION 3: QRIS & PAYMENT GATEWAY MANAGEMENT */}
