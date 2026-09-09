@@ -96,8 +96,9 @@ export const INITIAL_CMS_CONFIG: CmsConfig = {
     { id: "ekonomi", name: "Pemberdayaan Ekonomi", iconName: "Coins", description: "Modal usaha mikro dan kemandirian pangan umat" },
     { id: "dakwah", name: "Dakwah & Sarana Ibadah", iconName: "Church", description: "Renovasi masjid dan sarana ibadah pelosok" }
   ],
-  qrisMerchantName: "PARAMIS FOUNDATION",
-  qrisNmid: "ID102026198",
+  qrisMerchantName: "PRCRSA HADJI ABDUL MUIS",
+  qrisNmid: "ID1026589758873",
+  qrisImageUrl: "/qris-prcrsa-hadji-abdul-muis.svg",
   bankAccounts: [
     { bank: "Bank Syariah Indonesia (BSI)", accountNumber: "7188 9090 12", accountName: "Yayasan Prakarsa Hadji Abdul Muis", notes: "KCP Jakarta Pusat", isActive: true },
     { bank: "Bank Central Asia (BCA)", accountNumber: "5420 891 002", accountName: "Yayasan Prakarsa Hadji Abdul Muis", notes: "KCU Thamrin", isActive: true },

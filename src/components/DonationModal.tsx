@@ -404,13 +404,14 @@ export const DonationModal: React.FC<DonationModalProps> = ({
               {createdTransaction.paymentMethod === 'qris' ? (
                 <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center flex flex-col items-center space-y-2">
                   <QrisDisplay 
-                    imageUrl={currentCmsConfig.qrisImageUrl}
-                    merchantName={currentCmsConfig.qrisMerchantName || 'PARAMIS FOUNDATION'}
-                    nmid={currentCmsConfig.qrisNmid || 'ID102026198'}
+                    imageUrl={currentCmsConfig.qrisImageUrl || '/qris-prcrsa-hadji-abdul-muis.svg'}
+                    merchantName={currentCmsConfig.qrisMerchantName || 'PRCRSA HADJI ABDUL MUIS'}
+                    nmid={currentCmsConfig.qrisNmid || 'ID1026589758873'}
                     amount={createdTransaction.totalAmount}
                     invoiceNumber={createdTransaction.invoiceNumber}
                     size="md"
                     showScanNotice={true}
+                    showDownloadBtn={true}
                   />
                 </div>
               ) : (

@@ -51,9 +51,17 @@ export const AdminBankQrisView: React.FC<AdminBankQrisViewProps> = ({
 }) => {
   // Local state for banks and QRIS
   const [bankAccounts, setBankAccounts] = useState(cmsConfig.bankAccounts || []);
-  const [qrisImageUrl, setQrisImageUrl] = useState(cmsConfig.qrisImageUrl || '');
-  const [qrisMerchantName, setQrisMerchantName] = useState(cmsConfig.qrisMerchantName || 'PARAMIS FOUNDATION');
-  const [qrisNmid, setQrisNmid] = useState(cmsConfig.qrisNmid || 'ID102026198');
+  const [qrisImageUrl, setQrisImageUrl] = useState(cmsConfig.qrisImageUrl || '/qris-prcrsa-hadji-abdul-muis.svg');
+  const [qrisMerchantName, setQrisMerchantName] = useState(
+    cmsConfig.qrisMerchantName && cmsConfig.qrisMerchantName !== 'PARAMIS FOUNDATION' 
+      ? cmsConfig.qrisMerchantName 
+      : 'PRCRSA HADJI ABDUL MUIS'
+  );
+  const [qrisNmid, setQrisNmid] = useState(
+    cmsConfig.qrisNmid && cmsConfig.qrisNmid !== 'ID102026198'
+      ? cmsConfig.qrisNmid
+      : 'ID1026589758873'
+  );
 
   // Payment Gateway Configuration
   const [qrisGatewayProvider, setQrisGatewayProvider] = useState<'manual' | 'midtrans' | 'xendit' | 'tripay' | 'duitku'>(

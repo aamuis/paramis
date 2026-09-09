@@ -302,9 +302,16 @@ function applyCmsMigrations(input: CmsConfig): { config: CmsConfig; changed: boo
     changed = true;
   }
 
-  if (!config.qrisNmid) {
+  if (!config.qrisNmid || config.qrisNmid === 'ID102026198') {
     config.qrisNmid = INITIAL_CMS_CONFIG.qrisNmid;
     config.qrisMerchantName = INITIAL_CMS_CONFIG.qrisMerchantName;
+    if (!config.qrisImageUrl) {
+      config.qrisImageUrl = INITIAL_CMS_CONFIG.qrisImageUrl;
+    }
+    changed = true;
+  }
+  if (!config.qrisImageUrl) {
+    config.qrisImageUrl = INITIAL_CMS_CONFIG.qrisImageUrl;
     changed = true;
   }
 

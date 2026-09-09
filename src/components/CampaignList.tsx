@@ -10,10 +10,18 @@ import {
   Flame,
   ArrowRight,
   Sparkles,
-  X
+  X,
+  QrCode,
+  Download,
+  Copy,
+  Check,
+  ShieldCheck,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { DonationCampaign, CampaignCategory } from '../types';
 import { INDONESIA_PROVINCES, getCitiesByProvince } from '../data/indonesiaRegions';
+import { OFFICIAL_QRIS_CONFIG } from '../utils/qris';
 
 interface CampaignListProps {
   campaigns: DonationCampaign[];
@@ -54,6 +62,23 @@ export const CampaignList: React.FC<CampaignListProps> = ({
     }
   };
   const [sortByNearest, setSortByNearest] = useState(false);
+  const [showQuickQris, setShowQuickQris] = useState(true);
+  const [copiedNmid, setCopiedNmid] = useState(false);
+
+  const handleCopyNmid = () => {
+    navigator.clipboard.writeText(OFFICIAL_QRIS_CONFIG.nmid);
+    setCopiedNmid(true);
+    setTimeout(() => setCopiedNmid(false), 2000);
+  };
+
+  const handleDownloadQris = () => {
+    const a = document.createElement('a');
+    a.href = OFFICIAL_QRIS_CONFIG.defaultPngUrl;
+    a.download = `QRIS-${OFFICIAL_QRIS_CONFIG.merchantName.replace(/\s+/g, '_')}-${OFFICIAL_QRIS_CONFIG.nmid}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
   
   // Comprehensive Indonesia Regional Filter: Provinsi & Kabupaten/Kota
   const [selectedProvinceFilter, setSelectedProvinceFilter] = useState<string>('semua');
@@ -135,6 +160,132 @@ export const CampaignList: React.FC<CampaignListProps> = ({
             Pencarian Proyek Sosial & Donasi
           </h2>
         </div>
+      </div>
+
+      {/* KARTU RESMI QRIS DONASI (Ambil code QR nya saja) */}
+      <div className="w-full p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-blue-900 via-[#060ee3] to-indigo-900 text-white shadow-lg relative overflow-hidden border border-blue-400/30">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-blue-400/30">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
+              <QrCode className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-extrabold text-sm sm:text-base tracking-tight">
+                  Donasi Instan via Barcode QRIS Resmi
+                </h3>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 font-bold border border-emerald-400/30">
+                  Resmi BI
+                </span>
+              </div>
+              <p className="text-[11px] text-blue-100/90 mt-0.5">
+                Scan barcode langsung dengan Mobile Banking atau Dompet Digital apa saja
+              </p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowQuickQris(!showQuickQris)}
+            className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold flex items-center gap-1.5 self-start sm:self-center transition-all cursor-pointer"
+          >
+            <span>{showQuickQris ? 'Sembunyikan' : 'Tampilkan Barcode'}</span>
+            {showQuickQris ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          </button>
+        </div>
+
+        {showQuickQris && (
+          <div className="mt-4 pt-1 flex flex-col md:flex-row items-center gap-5 animate-in fade-in slide-in-from-top-2">
+            {/* Box Barcode QRIS: Ambil code QR nya saja */}
+            <div className="shrink-0 flex flex-col items-center">
+              <div className="p-3 bg-white rounded-2xl shadow-xl border-2 border-white/80">
+                <img 
+                  src={OFFICIAL_QRIS_CONFIG.defaultImageUrl} 
+                  alt={`QRIS ${OFFICIAL_QRIS_CONFIG.merchantName}`}
+                  className="w-44 h-44 sm:w-48 sm:h-48 object-contain select-none"
+                />
+              </div>
+              <span className="text-[10px] text-blue-200 mt-2 font-mono font-medium">
+                NMID: {OFFICIAL_QRIS_CONFIG.nmid}
+              </span>
+            </div>
+
+            {/* Keterangan Merchant & Tombol Aksi Cepat */}
+            <div className="flex-1 space-y-3 text-center md:text-left w-full">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-blue-200 tracking-wider">
+                  Nama Merchant Resmi
+                </span>
+                <h4 className="text-base sm:text-lg font-black tracking-wide text-white">
+                  {OFFICIAL_QRIS_CONFIG.merchantName}
+                </h4>
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-1 text-xs text-blue-100">
+                  <span className="font-mono bg-white/10 px-2 py-0.5 rounded-md text-[11px]">
+                    NMID: {OFFICIAL_QRIS_CONFIG.nmid}
+                  </span>
+                  <span className="text-[11px] text-blue-200">
+                    Dicetak oleh: {OFFICIAL_QRIS_CONFIG.acquirerNss}
+                  </span>
+                </div>
+              </div>
+
+              {/* Supported Payment methods badge */}
+              <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/15">
+                <p className="text-[10px] text-blue-100 font-semibold mb-1.5">
+                  Dapat discan melalui seluruh aplikasi perbankan & dompet digital:
+                </p>
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-1 font-bold text-[10px] text-slate-900">
+                  {['BCA Mobile', 'Livin Mandiri', 'BRImo', 'BYOND BSI', 'GoPay', 'OVO', 'DANA', 'ShopeePay', 'LinkAja'].map((app) => (
+                    <span key={app} className="px-2 py-0.5 rounded-md bg-white text-slate-800 text-[10px] shadow-xs">
+                      {app}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleDownloadQris}
+                  className="px-3.5 py-2 rounded-xl bg-white text-[#060ee3] hover:bg-blue-50 font-bold text-xs shadow-md flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Unduh Barcode QRIS</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleCopyNmid}
+                  className="px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/30 flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                >
+                  {copiedNmid ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-emerald-300">NMID Tersalin!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>Salin NMID</span>
+                    </>
+                  )}
+                </button>
+
+                {campaigns.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => onSelectCampaignForDonation(campaigns[0])}
+                    className="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-900 font-bold text-xs shadow-md flex items-center gap-1.5 transition-all cursor-pointer active:scale-95 sm:ml-auto"
+                  >
+                    <Heart className="w-3.5 h-3.5 fill-slate-900" />
+                    <span>Donasi Tertarget</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Search Input Bar */}
