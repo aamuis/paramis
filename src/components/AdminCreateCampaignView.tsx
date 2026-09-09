@@ -32,6 +32,7 @@ const PRESET_CAMPAIGN_TEMPLATES: Array<{
   days: number;
   desc: string;
   image: string;
+  banner?: string;
   urgent: boolean;
 }> = [
   {
@@ -42,6 +43,7 @@ const PRESET_CAMPAIGN_TEMPLATES: Array<{
     days: 60,
     desc: 'Mari bersama PARAMIS FOUNDATION bantu mencukupi kebutuhan pangan bergizi, perlengkapan belajar, dan pembinaan karakter ratusan anak yatim dan santri dhuafa penghafal Al-Qur\'an.',
     image: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80',
+    banner: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80',
     urgent: false
   },
   {
@@ -52,6 +54,7 @@ const PRESET_CAMPAIGN_TEMPLATES: Array<{
     days: 45,
     desc: 'Bantuan pengobatan lanjutan, obat-obatan non-BPJS, serta akomodasi ambulans untuk pasien dari keluarga prasejahtera yang berjuang melawan penyakit kronis.',
     image: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80',
+    banner: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=1600&q=80',
     urgent: true
   },
   {
@@ -62,6 +65,7 @@ const PRESET_CAMPAIGN_TEMPLATES: Array<{
     days: 90,
     desc: 'Penyediaan tempat wudhu layak, perbaikan atap bocor, dan karpet ibadah untuk jamaah masjid di wilayah pelosok pedesaan agar beribadah lebih nyaman dan khusyuk.',
     image: 'https://images.unsplash.com/photo-1564769625905-50e93615e769?auto=format&fit=crop&w=800&q=80',
+    banner: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1600&q=80',
     urgent: false
   },
   {
@@ -72,6 +76,7 @@ const PRESET_CAMPAIGN_TEMPLATES: Array<{
     days: 90,
     desc: 'Program beasiswa penuh meliputi biaya asrama, kitab kuning, makan harian, dan pembinaan intensif bagi calon da\'i dan penghafal Al-Qur\'an berprestasi dari keluarga kurang mampu.',
     image: 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?auto=format&fit=crop&w=800&q=80',
+    banner: 'https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=1600&q=80',
     urgent: false
   },
   {
@@ -82,6 +87,7 @@ const PRESET_CAMPAIGN_TEMPLATES: Array<{
     days: 30,
     desc: 'Penyaluran cepat paket sembako darurat, air bersih, tenda penampungan sementara, dan layanan ambulans medis siaga bagi warga yang terdampak bencana alam.',
     image: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=800&q=80',
+    banner: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1600&q=80',
     urgent: true
   },
   {
@@ -92,6 +98,7 @@ const PRESET_CAMPAIGN_TEMPLATES: Array<{
     days: 30,
     desc: 'Distribusi bahan pangan pokok berisi beras, minyak goreng, telur, dan nutrisi untuk para lansia sebatang kara dan buruh harian lepas yang membutuhkan uluran tangan kita.',
     image: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80',
+    banner: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1600&q=80',
     urgent: false
   }
 ];
@@ -103,6 +110,15 @@ const CURATED_IMAGES = [
   { label: 'Pendidikan / Santri', url: 'https://images.unsplash.com/photo-1542810634-71277d95dcbb?auto=format&fit=crop&w=800&q=80' },
   { label: 'Pangan / Sembako', url: 'https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80' },
   { label: 'Tanggap Bencana', url: 'https://images.unsplash.com/photo-1469571486292-0ba58a3f068b?auto=format&fit=crop&w=800&q=80' }
+];
+
+const CURATED_BANNERS = [
+  { label: 'Banner Belajar & Yatim', url: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80' },
+  { label: 'Banner Rescue & Bencana', url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1600&q=80' },
+  { label: 'Banner Sembako & Lansia', url: 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1600&q=80' },
+  { label: 'Banner Masjid & Air Bersih', url: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1600&q=80' },
+  { label: 'Banner Santri & Al-Qur\'an', url: 'https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=1600&q=80' },
+  { label: 'Banner Medis & Tanggap Cepat', url: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=1600&q=80' }
 ];
 
 export const AdminCreateCampaignView: React.FC<AdminCreateCampaignViewProps> = ({
@@ -119,6 +135,7 @@ export const AdminCreateCampaignView: React.FC<AdminCreateCampaignViewProps> = (
   const [city, setCity] = useState('Kota Bogor');
   const [description, setDescription] = useState('');
   const [coverImage, setCoverImage] = useState('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80');
+  const [bannerImage, setBannerImage] = useState('https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80');
   const [isUrgent, setIsUrgent] = useState(false);
   const [isActive, setIsActive] = useState(true);
 
@@ -134,17 +151,20 @@ export const AdminCreateCampaignView: React.FC<AdminCreateCampaignViewProps> = (
     setDurationDays(tmpl.days);
     setDescription(tmpl.desc);
     setCoverImage(tmpl.image);
+    if (tmpl.banner) {
+      setBannerImage(tmpl.banner);
+    }
     setIsUrgent(tmpl.urgent);
     setErrorMsg('');
   };
 
-  // Upload image handler
+  // Upload Cover Image handler
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 3 * 1024 * 1024) {
-      alert('Ukuran file maksimal 3MB.');
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ukuran file foto sampul maksimal 5MB.');
       return;
     }
 
@@ -153,6 +173,26 @@ export const AdminCreateCampaignView: React.FC<AdminCreateCampaignViewProps> = (
       const base64 = event.target?.result as string;
       if (base64) {
         setCoverImage(base64);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Upload Banner Image handler
+  const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ukuran file banner galang donasi maksimal 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      if (base64) {
+        setBannerImage(base64);
       }
     };
     reader.readAsDataURL(file);
@@ -169,6 +209,7 @@ export const AdminCreateCampaignView: React.FC<AdminCreateCampaignViewProps> = (
     setCity('Kota Bogor');
     setDescription('');
     setCoverImage('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80');
+    setBannerImage('https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80');
     setIsUrgent(false);
     setIsActive(true);
     setErrorMsg('');
@@ -206,6 +247,7 @@ export const AdminCreateCampaignView: React.FC<AdminCreateCampaignViewProps> = (
         fullDescription: description.trim(),
         targetAmount: Number(targetAmount),
         coverImage: coverImage.trim() || 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80',
+        bannerImage: bannerImage.trim() || coverImage.trim() || 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80',
         active: isActive,
         isUrgent,
         location: {
@@ -497,74 +539,187 @@ export const AdminCreateCampaignView: React.FC<AdminCreateCampaignViewProps> = (
           </div>
         </div>
 
-        {/* 3. Foto Sampul Program */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-3 text-xs shadow-xs">
-          <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-2">
-            <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-950 text-[#060ee3] dark:text-blue-300 flex items-center justify-center font-bold text-[11px]">
-              3
+        {/* 3. Foto Sampul & Banner Galang Donasi */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-5 text-xs shadow-xs">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-lg bg-blue-100 dark:bg-blue-950 text-[#060ee3] dark:text-blue-300 flex items-center justify-center font-bold text-[11px]">
+                3
+              </div>
+              <div>
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                  Foto Sampul & Banner Galang Donasi
+                </h4>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Dapat diunggah langsung dari perangkat Anda dan otomatis tersimpan permanen di web
+                </p>
+              </div>
             </div>
-            <h4 className="font-bold text-slate-900 dark:text-white">
-              Foto Sampul & Banner Galang Donasi
-            </h4>
+            <span className="hidden sm:inline-flex px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-200 dark:border-emerald-800">
+              Tersimpan di Web
+            </span>
           </div>
 
-          {/* Image Live Preview */}
-          <div className="flex flex-col sm:flex-row gap-3 items-start">
-            <div className="w-full sm:w-44 h-28 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 shrink-0 relative">
-              <img
-                src={coverImage}
-                alt="Pratinjau Sampul"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80';
-                }}
-              />
-              {isUrgent && (
-                <span className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-rose-600 text-white font-bold text-[9px] uppercase shadow-xs">
-                  Mendesak
-                </span>
-              )}
+          {/* 3A: FOTO SAMPUL PROGRAM (Cover Image) */}
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <span>A. Foto Sampul Program (Cover Card)</span>
+                <span className="text-[10px] text-slate-500 font-normal">(Rasio 4:3 untuk kartu donasi & pencarian)</span>
+              </label>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-[#060ee3] dark:text-blue-300 font-bold">
+                Wajib Ada
+              </span>
             </div>
 
-            <div className="flex-1 space-y-2 w-full">
-              <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-3.5 items-start">
+              {/* Cover Live Preview */}
+              <div className="w-full sm:w-44 h-32 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-200 dark:bg-slate-800 shrink-0 relative group shadow-xs">
+                <img
+                  src={coverImage}
+                  alt="Pratinjau Foto Sampul"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80';
+                  }}
+                />
+                <span className="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded bg-black/60 backdrop-blur-xs text-white text-[9px] font-bold">
+                  Pratinjau Sampul
+                </span>
+                {isUrgent && (
+                  <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded bg-rose-600 text-white font-bold text-[9px] uppercase shadow-xs">
+                    Mendesak
+                  </span>
+                )}
+              </div>
+
+              {/* Upload Controls */}
+              <div className="flex-1 space-y-2.5 w-full">
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={coverImage}
+                    onChange={(e) => setCoverImage(e.target.value)}
+                    placeholder="Masukkan tautan URL foto sampul..."
+                    className="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono focus:outline-hidden focus:ring-2 focus:ring-[#060ee3]"
+                  />
+                  <label className="px-3.5 py-2 rounded-xl bg-[#060ee3] hover:bg-blue-700 text-white font-bold flex items-center justify-center gap-1.5 shrink-0 cursor-pointer shadow-xs transition-all active:scale-95">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>Unggah Foto Sampul</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileChange}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                {/* Curated Cover Presets */}
+                <div>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">
+                    Atau pilih foto kurasi cepat:
+                  </span>
+                  <div className="flex gap-1.5 overflow-x-auto pb-1">
+                    {CURATED_IMAGES.map((img, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setCoverImage(img.url)}
+                        className={`px-2.5 py-1 rounded-lg text-[10px] border whitespace-nowrap cursor-pointer transition-all ${
+                          coverImage === img.url
+                            ? 'border-[#060ee3] bg-blue-100 dark:bg-blue-950 font-bold text-[#060ee3] dark:text-blue-300'
+                            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                        }`}
+                      >
+                        {img.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 3B: BANNER GALANG DONASI (Wide Hero Banner) */}
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                <span>B. Banner Galang Donasi (Header Panorama)</span>
+                <span className="text-[10px] text-slate-500 font-normal">(Rasio 16:9 / 21:9 untuk banner utama & modal donasi)</span>
+              </label>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-bold">
+                Tampilan Panorama
+              </span>
+            </div>
+
+            {/* Banner Live Preview */}
+            <div className="w-full h-36 sm:h-40 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-200 dark:bg-slate-800 relative group shadow-sm">
+              <img
+                src={bannerImage}
+                alt="Pratinjau Banner Galang Donasi"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80';
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-3.5 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="px-2 py-0.5 rounded-md bg-[#060ee3] text-white text-[9px] font-bold uppercase tracking-wider">
+                      Banner Galang Donasi Resmi
+                    </span>
+                    <h5 className="font-extrabold text-xs sm:text-sm text-white mt-1 line-clamp-1 drop-shadow-md">
+                      {title || 'Judul Program Galang Donasi Anda'}
+                    </h5>
+                  </div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 backdrop-blur-md font-mono text-white/90">
+                    16:9 HD
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Banner Upload Controls */}
+            <div className="space-y-2.5">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
-                  value={coverImage}
-                  onChange={(e) => setCoverImage(e.target.value)}
-                  placeholder="Masukkan tautan URL foto gambar..."
-                  className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-mono focus:outline-none"
+                  value={bannerImage}
+                  onChange={(e) => setBannerImage(e.target.value)}
+                  placeholder="Masukkan tautan URL banner galang donasi..."
+                  className="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs font-mono focus:outline-hidden focus:ring-2 focus:ring-[#060ee3]"
                 />
-                <label className="px-3.5 py-2 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white font-bold flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs transition-colors">
+                <label className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold flex items-center justify-center gap-1.5 shrink-0 cursor-pointer shadow-xs transition-all active:scale-95">
                   <Upload className="w-3.5 h-3.5" />
-                  <span>Unggah File</span>
+                  <span>Unggah Banner Donasi</span>
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={handleImageFileChange}
+                    onChange={handleBannerFileChange}
                     className="hidden"
                   />
                 </label>
               </div>
 
-              {/* Curated Thumbnails */}
+              {/* Curated Banner Presets */}
               <div>
-                <span className="text-[10px] text-slate-500 block mb-1">
-                  Atau pilih foto kurasi cepat:
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">
+                  Pilihan banner panorama kurasi cepat:
                 </span>
                 <div className="flex gap-1.5 overflow-x-auto pb-1">
-                  {CURATED_IMAGES.map((img, i) => (
+                  {CURATED_BANNERS.map((bnr, idx) => (
                     <button
-                      key={i}
+                      key={idx}
                       type="button"
-                      onClick={() => setCoverImage(img.url)}
-                      className={`px-2 py-1 rounded-lg text-[10px] border whitespace-nowrap cursor-pointer transition-all ${
-                        coverImage === img.url
-                          ? 'border-[#060ee3] bg-blue-50 dark:bg-blue-950/60 font-bold text-[#060ee3] dark:text-blue-300'
-                          : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100'
+                      onClick={() => setBannerImage(bnr.url)}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] border whitespace-nowrap cursor-pointer transition-all ${
+                        bannerImage === bnr.url
+                          ? 'border-purple-600 bg-purple-100 dark:bg-purple-950 font-bold text-purple-700 dark:text-purple-300'
+                          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
                       }`}
                     >
-                      {img.label}
+                      {bnr.label}
                     </button>
                   ))}
                 </div>

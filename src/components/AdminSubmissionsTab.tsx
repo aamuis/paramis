@@ -299,12 +299,17 @@ Jika ada berkas tambahan atau dokumentasi lapangan terbaru yang ingin disertakan
               >
                 {/* Card Top: Image + Info */}
                 <div className="flex flex-col sm:flex-row gap-3.5">
-                  <div className="w-full sm:w-36 h-28 rounded-2xl overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900">
+                  <div className="w-full sm:w-36 h-28 rounded-2xl overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 relative">
                     <img
                       src={sub.coverImage}
                       alt={sub.title}
                       className="w-full h-full object-cover"
                     />
+                    {sub.bannerImage && (
+                      <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-purple-600/90 text-[8px] font-bold text-white shadow-xs">
+                        + Banner
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex-1 min-w-0 space-y-1.5">

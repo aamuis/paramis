@@ -42,7 +42,8 @@ export interface DonationCampaign {
   targetAmount: number;
   collectedAmount: number;
   donorCount: number;
-  coverImage: string;
+  coverImage: string; // Foto Sampul Program
+  bannerImage?: string; // Banner Galang Donasi
   location: {
     city: string;
     province: string;
@@ -239,7 +240,8 @@ export interface CampaignSubmission {
   targetAmount: number;
   durationDays: number;
   endDate: string;
-  coverImage: string;
+  coverImage: string; // Foto Sampul Program
+  bannerImage?: string; // Banner Galang Donasi
   description: string;
   // Applicant details (pengunjung tidak perlu buat akun)
   applicantName: string;

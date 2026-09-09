@@ -58,6 +58,7 @@ export const FundraiserForm: React.FC<FundraiserFormProps> = ({
   const [targetAmount, setTargetAmount] = useState<number>(25000000);
   const [durationDays, setDurationDays] = useState<number>(60);
   const [coverImage, setCoverImage] = useState<string>('https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80');
+  const [bannerImage, setBannerImage] = useState<string>('https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80');
   const [description, setDescription] = useState('');
 
   // Regional Dropdowns (Semua Provinsi & Kabupaten Kota Indonesia)
@@ -112,6 +113,24 @@ export const FundraiserForm: React.FC<FundraiserFormProps> = ({
     }
   };
 
+  const handleBannerFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorMessage('Ukuran file banner donasi maksimal 5 MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setBannerImage(event.target.result as string);
+          setErrorMessage('');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -152,6 +171,7 @@ export const FundraiserForm: React.FC<FundraiserFormProps> = ({
         durationDays,
         endDate,
         coverImage,
+        bannerImage: bannerImage || coverImage,
         description: description.trim(),
         applicantName: applicantName.trim(),
         applicantWhatsapp: applicantWhatsapp.trim(),
@@ -416,21 +436,24 @@ export const FundraiserForm: React.FC<FundraiserFormProps> = ({
             </div>
           </div>
 
-          {/* FOTO KEGIATAN */}
-          <div className="space-y-2">
-            <label className="block font-bold text-slate-700 dark:text-slate-300">
-              Foto Kegiatan / Foto Campaign <span className="text-rose-500">*</span>
-            </label>
+          {/* FOTO SAMPUL PROGRAM */}
+          <div className="space-y-2 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <label className="block font-bold text-slate-700 dark:text-slate-300 text-xs">
+                1. Foto Sampul Program (Cover Card) <span className="text-rose-500">*</span>
+              </label>
+              <span className="text-[10px] text-slate-500">Rasio 4:3</span>
+            </div>
             
             {coverImage && (
-              <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 aspect-video max-h-48 group">
+              <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 aspect-video max-h-40 group">
                 <img 
                   src={coverImage} 
                   alt="Preview Cover" 
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold">
-                  Foto Terpasang
+                  Foto Sampul Terpasang
                 </div>
               </div>
             )}
@@ -438,10 +461,10 @@ export const FundraiserForm: React.FC<FundraiserFormProps> = ({
             <div className="flex flex-col sm:flex-row gap-2 items-stretch">
               <label 
                 htmlFor={`${formId}-photo-upload`}
-                className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-400 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold cursor-pointer transition-all text-center"
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-400 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold cursor-pointer transition-all text-center text-xs"
               >
-                <Upload className="w-4 h-4 text-[#060ee3] dark:text-blue-400" />
-                <span>Upload Foto dari Perangkat (Max 5MB)</span>
+                <Upload className="w-3.5 h-3.5 text-[#060ee3] dark:text-blue-400" />
+                <span>Upload Foto Sampul (Max 5MB)</span>
               </label>
               <input 
                 id={`${formId}-photo-upload`}
@@ -471,6 +494,46 @@ export const FundraiserForm: React.FC<FundraiserFormProps> = ({
                   </button>
                 ))}
               </div>
+            </div>
+          </div>
+
+          {/* BANNER GALANG DONASI */}
+          <div className="space-y-2 p-3.5 rounded-2xl bg-purple-50/40 dark:bg-slate-800/60 border border-purple-200/80 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <label className="block font-bold text-purple-900 dark:text-purple-300 text-xs">
+                2. Banner Galang Donasi (Header Panorama)
+              </label>
+              <span className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">Rasio 16:9 HD</span>
+            </div>
+
+            {bannerImage && (
+              <div className="relative rounded-xl overflow-hidden border border-purple-200 dark:border-slate-700 aspect-video max-h-40 group shadow-xs">
+                <img 
+                  src={bannerImage} 
+                  alt="Preview Banner Donasi" 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex items-end p-2.5 text-white text-xs font-bold">
+                  <span>Banner Galang Donasi Terpasang</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-2 items-stretch">
+              <label 
+                htmlFor={`${formId}-banner-upload`}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-dashed border-purple-300 dark:border-purple-800 hover:border-purple-500 bg-white dark:bg-slate-800 text-purple-700 dark:text-purple-300 font-bold cursor-pointer transition-all text-center text-xs"
+              >
+                <Upload className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
+                <span>Upload Banner Donasi dari Perangkat (Max 5MB)</span>
+              </label>
+              <input 
+                id={`${formId}-banner-upload`}
+                type="file" 
+                accept="image/*"
+                onChange={handleBannerFileUpload}
+                className="hidden" 
+              />
             </div>
           </div>
 

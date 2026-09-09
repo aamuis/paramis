@@ -373,10 +373,18 @@ async function initDatabase(): Promise<void> {
         return s;
       });
       cache.campaigns = (campaigns.length ? campaigns : INITIAL_CAMPAIGNS).map(c => {
+        const initialMatch = INITIAL_CAMPAIGNS.find(ic => ic.id === c.id);
+        let item = c;
         if (c.id === 'camp-3' || c.title.toLowerCase().includes('ambulans')) {
-          return INITIAL_CAMPAIGNS.find(ic => ic.id === 'camp-3') || c;
+          item = initialMatch || c;
         }
-        return c;
+        if (!item.bannerImage) {
+          item = {
+            ...item,
+            bannerImage: initialMatch?.bannerImage || item.coverImage || 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80'
+          };
+        }
+        return item;
       });
       cache.transactions = transactions;
       cache.volunteers = volunteers;
@@ -918,6 +926,7 @@ export function approveCampaignSubmission(
     collectedAmount: 0,
     donorCount: 0,
     coverImage: sub.coverImage || 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80',
+    bannerImage: sub.bannerImage || sub.coverImage || 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80',
     location: {
       city: sub.location.city,
       province: sub.location.province,

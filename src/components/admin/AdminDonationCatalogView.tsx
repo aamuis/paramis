@@ -15,7 +15,9 @@ import {
   Save,
   RotateCcw,
   Eye,
-  Check
+  Check,
+  Upload,
+  Image as ImageIcon
 } from 'lucide-react';
 import { DonationCampaign, CampaignCategory } from '../../types';
 import { getCampaigns, updateCampaign, deleteCampaign } from '../../services/storage';
@@ -46,6 +48,7 @@ export const AdminDonationCatalogView: React.FC<AdminDonationCatalogViewProps> =
   const [editIsUrgent, setEditIsUrgent] = useState(false);
   const [editActive, setEditActive] = useState<boolean>(true);
   const [editImageUrl, setEditImageUrl] = useState('');
+  const [editBannerUrl, setEditBannerUrl] = useState('');
   const [editStory, setEditStory] = useState('');
 
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -54,6 +57,40 @@ export const AdminDonationCatalogView: React.FC<AdminDonationCatalogViewProps> =
     setSuccessMsg(msg);
     setTimeout(() => setSuccessMsg(null), 3500);
     onRefresh?.();
+  };
+
+  const handleUploadCoverFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ukuran file foto sampul maksimal 5MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      if (base64) {
+        setEditImageUrl(base64);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleUploadBannerFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Ukuran file banner galang donasi maksimal 5MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      if (base64) {
+        setEditBannerUrl(base64);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleStartEdit = (camp: DonationCampaign) => {
@@ -67,6 +104,7 @@ export const AdminDonationCatalogView: React.FC<AdminDonationCatalogViewProps> =
     setEditIsUrgent(!!camp.isUrgent);
     setEditActive(camp.active);
     setEditImageUrl(camp.coverImage || '');
+    setEditBannerUrl(camp.bannerImage || camp.coverImage || '');
     setEditStory(camp.fullDescription || camp.shortDescription || '');
     window.scrollTo({ top: 120, behavior: 'smooth' });
   };
@@ -85,6 +123,7 @@ export const AdminDonationCatalogView: React.FC<AdminDonationCatalogViewProps> =
       isUrgent: editIsUrgent,
       active: editActive,
       coverImage: editImageUrl.trim(),
+      bannerImage: editBannerUrl.trim() || editImageUrl.trim(),
       shortDescription: editStory.trim().slice(0, 160),
       fullDescription: editStory.trim()
     });
@@ -266,18 +305,102 @@ export const AdminDonationCatalogView: React.FC<AdminDonationCatalogViewProps> =
               </select>
             </div>
 
-            {/* Image URL */}
-            <div className="sm:col-span-2 md:col-span-3">
-              <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                URL Gambar Utama Program
-              </label>
-              <input
-                type="url"
-                required
-                value={editImageUrl}
-                onChange={(e) => setEditImageUrl(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#060ee3]"
-              />
+            {/* FOTO SAMPUL & BANNER GALANG DONASI EDIT SECTION */}
+            <div className="sm:col-span-2 md:col-span-3 space-y-4 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                <span className="font-bold text-slate-800 dark:text-slate-200 text-xs">
+                  Foto Sampul & Banner Galang Donasi
+                </span>
+                <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                  Tersimpan di Web
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* 1. Foto Sampul */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span>1. Foto Sampul Program (Cover 4:3)</span>
+                    <span className="text-[10px] text-slate-400 font-normal">Kartu donasi</span>
+                  </div>
+
+                  <div className="h-28 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-200 dark:bg-slate-800 relative">
+                    <img
+                      src={editImageUrl}
+                      alt="Pratinjau Foto Sampul"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=800&q=80';
+                      }}
+                    />
+                    <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-black/60 text-white text-[9px] font-bold">
+                      Sampul
+                    </span>
+                  </div>
+
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={editImageUrl}
+                      onChange={(e) => setEditImageUrl(e.target.value)}
+                      placeholder="URL Foto Sampul..."
+                      className="flex-1 px-2.5 py-1.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono focus:outline-hidden"
+                    />
+                    <label className="px-3 py-1.5 rounded-xl bg-[#060ee3] hover:bg-blue-700 text-white font-bold text-xs flex items-center gap-1 shrink-0 cursor-pointer shadow-xs transition-all">
+                      <Upload className="w-3 h-3" />
+                      <span>Unggah</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleUploadCoverFile}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* 2. Banner Galang Donasi */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span>2. Banner Galang Donasi (Header 16:9)</span>
+                    <span className="text-[10px] text-purple-600 dark:text-purple-400 font-normal">Panorama HD</span>
+                  </div>
+
+                  <div className="h-28 w-full rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-200 dark:bg-slate-800 relative">
+                    <img
+                      src={editBannerUrl || editImageUrl}
+                      alt="Pratinjau Banner Galang Donasi"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80';
+                      }}
+                    />
+                    <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-purple-900/80 text-white text-[9px] font-bold">
+                      Banner Galang Donasi
+                    </span>
+                  </div>
+
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={editBannerUrl}
+                      onChange={(e) => setEditBannerUrl(e.target.value)}
+                      placeholder="URL Banner Galang Donasi..."
+                      className="flex-1 px-2.5 py-1.5 text-xs rounded-xl bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono focus:outline-hidden"
+                    />
+                    <label className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center gap-1 shrink-0 cursor-pointer shadow-xs transition-all">
+                      <Upload className="w-3 h-3" />
+                      <span>Unggah</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleUploadBannerFile}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Urgent Checkbox */}
@@ -377,6 +500,12 @@ export const AdminDonationCatalogView: React.FC<AdminDonationCatalogViewProps> =
                       <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center gap-0.5">
                         <Flame className="w-3 h-3 fill-white" />
                         Mendesak
+                      </span>
+                    )}
+                    {camp.bannerImage && (
+                      <span className="px-2 py-0.5 rounded-full bg-purple-600/90 backdrop-blur-xs text-white text-[9px] font-bold flex items-center gap-0.5">
+                        <ImageIcon className="w-2.5 h-2.5" />
+                        Banner
                       </span>
                     )}
                   </div>

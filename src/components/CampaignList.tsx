@@ -17,7 +17,8 @@ import {
   Check,
   ShieldCheck,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Image as ImageIcon
 } from 'lucide-react';
 import { DonationCampaign, CampaignCategory } from '../types';
 import { INDONESIA_PROVINCES, getCitiesByProvince } from '../data/indonesiaRegions';
@@ -64,6 +65,7 @@ export const CampaignList: React.FC<CampaignListProps> = ({
   const [sortByNearest, setSortByNearest] = useState(false);
   const [showQuickQris, setShowQuickQris] = useState(true);
   const [copiedNmid, setCopiedNmid] = useState(false);
+  const [previewBannerCampaign, setPreviewBannerCampaign] = useState<DonationCampaign | null>(null);
 
   const handleCopyNmid = () => {
     navigator.clipboard.writeText(OFFICIAL_QRIS_CONFIG.nmid);
@@ -438,7 +440,7 @@ export const CampaignList: React.FC<CampaignListProps> = ({
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
                   {/* Badges */}
-                  <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
+                  <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 z-10">
                     <span className="px-2 py-0.5 rounded-full bg-white/95 dark:bg-slate-900/95 text-[10px] font-bold text-[#060ee3] dark:text-blue-400 shadow-xs uppercase tracking-wide">
                       {camp.categoryLabel}
                     </span>
@@ -448,6 +450,21 @@ export const CampaignList: React.FC<CampaignListProps> = ({
                         <Flame className="w-3 h-3 fill-white" />
                         Mendesak
                       </span>
+                    )}
+
+                    {camp.bannerImage && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewBannerCampaign(camp);
+                        }}
+                        className="px-2 py-0.5 rounded-full bg-purple-600/90 hover:bg-purple-700 text-[10px] font-bold text-white shadow-xs flex items-center gap-1 cursor-pointer transition-all active:scale-95"
+                        title="Lihat Banner Galang Donasi HD"
+                      >
+                        <ImageIcon className="w-2.5 h-2.5" />
+                        <span>Banner HD</span>
+                      </button>
                     )}
                   </div>
 
@@ -530,6 +547,85 @@ export const CampaignList: React.FC<CampaignListProps> = ({
           })
         )}
       </div>
+      
+      {/* BANNER GALANG DONASI PREVIEW MODAL */}
+      {previewBannerCampaign && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => setPreviewBannerCampaign(null)}
+        >
+          <div 
+            className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-xl bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
+                  <ImageIcon className="w-4 h-4" />
+                </span>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                    Banner Galang Donasi HD
+                  </h4>
+                  <p className="text-[10px] text-slate-500">
+                    {previewBannerCampaign.title}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewBannerCampaign(null)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Banner Full Image */}
+            <div className="relative aspect-video w-full bg-slate-950 overflow-hidden">
+              <img
+                src={previewBannerCampaign.bannerImage || previewBannerCampaign.coverImage}
+                alt="Banner Donasi"
+                className="w-full h-full object-contain"
+              />
+            </div>
+
+            {/* Modal Footer / Actions */}
+            <div className="p-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 dark:bg-slate-900/60">
+              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                <span className="font-bold text-[#060ee3] dark:text-blue-400">
+                  Target: Rp {previewBannerCampaign.targetAmount.toLocaleString('id-ID')}
+                </span>
+                <span>•</span>
+                <span>{previewBannerCampaign.donorCount} Donatur</span>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setPreviewBannerCampaign(null)}
+                  className="flex-1 sm:flex-none px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer"
+                >
+                  Tutup
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const c = previewBannerCampaign;
+                    setPreviewBannerCampaign(null);
+                    onSelectCampaignForDonation(c);
+                  }}
+                  className="flex-1 sm:flex-none px-5 py-2 rounded-xl bg-[#060ee3] hover:bg-blue-700 text-white text-xs font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                >
+                  <Heart className="w-3.5 h-3.5 fill-white" />
+                  <span>Donasi Sekarang</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

@@ -177,6 +177,7 @@ export const INITIAL_CAMPAIGNS: DonationCampaign[] = [
     collectedAmount: 89450000,
     donorCount: 412,
     coverImage: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=80",
+    bannerImage: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80",
     location: {
       city: "Jakarta Pusat",
       province: "DKI Jakarta",
@@ -227,6 +228,7 @@ export const INITIAL_CAMPAIGNS: DonationCampaign[] = [
     collectedAmount: 76800000,
     donorCount: 538,
     coverImage: "https://images.unsplash.com/photo-1547082299-de196ea013d6?auto=format&fit=crop&w=800&q=80",
+    bannerImage: "https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1600&q=80",
     location: {
       city: "Bekasi",
       province: "Jawa Barat",
@@ -276,6 +278,7 @@ export const INITIAL_CAMPAIGNS: DonationCampaign[] = [
     collectedAmount: 34100000,
     donorCount: 219,
     coverImage: "https://images.unsplash.com/photo-1593113598332-cd288d649433?auto=format&fit=crop&w=800&q=80",
+    bannerImage: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?auto=format&fit=crop&w=1600&q=80",
     location: {
       city: "Bogor",
       province: "Jawa Barat",
@@ -306,6 +309,7 @@ export const INITIAL_CAMPAIGNS: DonationCampaign[] = [
     collectedAmount: 61500000,
     donorCount: 284,
     coverImage: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80",
+    bannerImage: "https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=1600&q=80",
     location: {
       city: "Tangerang Selatan",
       province: "Banten",
@@ -336,6 +340,7 @@ export const INITIAL_CAMPAIGNS: DonationCampaign[] = [
     collectedAmount: 48900000,
     donorCount: 310,
     coverImage: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80",
+    bannerImage: "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1600&q=80",
     location: {
       city: "Cianjur",
       province: "Jawa Barat",
@@ -366,6 +371,7 @@ export const INITIAL_CAMPAIGNS: DonationCampaign[] = [
     collectedAmount: 22800000,
     donorCount: 175,
     coverImage: "https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=800&q=80",
+    bannerImage: "https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=1600&q=80",
     location: {
       city: "Jakarta Utara",
       province: "DKI Jakarta",
@@ -645,6 +651,7 @@ export const INITIAL_CAMPAIGN_SUBMISSIONS: CampaignSubmission[] = [
     durationDays: 45,
     endDate: "2026-10-20",
     coverImage: "https://images.unsplash.com/photo-1542810634-71277d95dcbb?auto=format&fit=crop&w=800&q=80",
+    bannerImage: "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1600&q=80",
     description: "Atap bangunan TPQ Al-Barokah di Kampung Cipayung roboh akibat hujan lebat disertai angin kencang pekan lalu. Saat ini 60 santri cilik terpaksa mengaji di teras warga secara bergantian. Dibutuhkan bantuan segera untuk perbaikan rangka atap baja ringan dan semen.",
     applicantName: "Ustadz Ahmad Fauzi",
     applicantWhatsapp: "081298765432",
@@ -672,6 +679,7 @@ export const INITIAL_CAMPAIGN_SUBMISSIONS: CampaignSubmission[] = [
     durationDays: 60,
     endDate: "2026-11-04",
     coverImage: "https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80",
+    bannerImage: "https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=1600&q=80",
     description: "Adik Bilal didiagnosis kelainan jantung bawaan (PJB) dan membutuhkan tindakan kateterisasi serta operasi lanjutan segera di RS Jantung Harapan Kita. Ayah Bilal bekerja sebagai buruh harian lepas dengan penghasilan tidak menentu dan kesulitan menutup selisih biaya penunjang obat non-BPJS.",
     applicantName: "Rahmat Hidayat (Ayah Bilal)",
     applicantWhatsapp: "085712345678",

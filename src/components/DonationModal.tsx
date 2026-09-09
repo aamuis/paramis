@@ -146,24 +146,48 @@ export const DonationModal: React.FC<DonationModalProps> = ({
           {/* STEP 1: FORM */}
           {step === 'form' && (
             <form onSubmit={handleCreateOrder} className="space-y-4">
-              {/* Campaign summary card */}
+              {/* Campaign summary card with Banner & Cover */}
               {campaign && (
-                <div className="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/50 flex items-center gap-3">
-                  <img 
-                    src={campaign.coverImage} 
-                    alt={campaign.title} 
-                    className="w-12 h-12 rounded-lg object-cover shrink-0" 
-                  />
-                  <div className="min-w-0">
-                    <span className="text-[10px] font-bold text-[#060ee3] dark:text-blue-400 uppercase tracking-wide">
-                      {campaign.categoryLabel}
-                    </span>
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                      {campaign.title}
-                    </h4>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                      Tersalurkan lewat PARAMIS FOUNDATION
-                    </p>
+                <div className="rounded-2xl overflow-hidden border border-blue-100 dark:border-blue-900/50 bg-blue-50/60 dark:bg-blue-950/40 shadow-xs">
+                  {campaign.bannerImage && (
+                    <div className="h-24 w-full relative overflow-hidden bg-slate-900">
+                      <img
+                        src={campaign.bannerImage}
+                        alt="Banner Galang Donasi"
+                        className="w-full h-full object-cover opacity-90"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+                      <div className="absolute top-2 right-2">
+                        <span className="px-2 py-0.5 rounded-full bg-white/25 backdrop-blur-md text-white text-[9px] font-bold">
+                          Banner Galang Donasi
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="p-3 flex items-center gap-3">
+                    <img 
+                      src={campaign.coverImage} 
+                      alt={campaign.title} 
+                      className="w-12 h-12 rounded-xl object-cover shrink-0 border border-white/60 dark:border-slate-700 shadow-xs" 
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-[#060ee3] dark:text-blue-400 uppercase tracking-wide">
+                          {campaign.categoryLabel}
+                        </span>
+                        {campaign.isUrgent && (
+                          <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-bold text-[8px] uppercase">
+                            Mendesak
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                        {campaign.title}
+                      </h4>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                        Tersalurkan resmi lewat PARAMIS FOUNDATION
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
