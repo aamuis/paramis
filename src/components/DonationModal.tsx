@@ -11,15 +11,19 @@ import {
   CheckCircle2, 
   Share2, 
   Download, 
-  Sparkles,
-  ShieldCheck,
-  ArrowLeft,
-  Clock
+  Sparkles, 
+  ShieldCheck, 
+  ArrowLeft, 
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  FileText
 } from 'lucide-react';
 import { DonationCampaign, PaymentMethodType, DonationTransaction, CmsConfig } from '../types';
 import { createDonationTransaction, verifyTransaction, getCmsConfig } from '../services/storage';
 import { ParamisLogo } from './ParamisLogo';
 import { QrisDisplay } from './QrisDisplay';
+import { ShareCampaignModal } from './ShareCampaignModal';
 
 interface DonationModalProps {
   isOpen: boolean;
@@ -42,6 +46,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const [step, setStep] = useState<'form' | 'payment' | 'success'>('form');
   const [selectedAmount, setSelectedAmount] = useState<number>(100000);
   const [customAmount, setCustomAmount] = useState<string>('');
+  const [showFullDescInModal, setShowFullDescInModal] = useState(false);
   const [donorName, setDonorName] = useState('');
   const [donorEmail, setDonorEmail] = useState('');
   const [donorPhone, setDonorPhone] = useState('');
@@ -52,6 +57,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
   const [createdTransaction, setCreatedTransaction] = useState<DonationTransaction | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   if (!isOpen) return null;
 
@@ -59,8 +65,8 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
   const handleCreateOrder = (e: React.FormEvent) => {
     e.preventDefault();
-    if (currentAmount < 10000) {
-      alert('Minimal donasi adalah Rp 10.000');
+    if (!currentAmount || currentAmount < 1) {
+      alert('Silakan masukkan nominal donasi (bebas berapa rupiahpun, tanpa batas minimum).');
       return;
     }
     if (!donorEmail || !donorPhone) {
@@ -130,14 +136,28 @@ export const DonationModal: React.FC<DonationModalProps> = ({
             </div>
           </div>
 
-          <button
-            id="btn-close-donation-modal"
-            onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-white/20 text-white transition-colors cursor-pointer"
-            aria-label="Tutup"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            {campaign && (
+              <button
+                type="button"
+                id="btn-share-donation-modal-header"
+                onClick={() => setIsShareModalOpen(true)}
+                className="p-1.5 rounded-full hover:bg-white/20 text-white transition-colors cursor-pointer"
+                title="Bagikan Tautan Donasi Ini"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
+            )}
+
+            <button
+              id="btn-close-donation-modal"
+              onClick={onClose}
+              className="p-1.5 rounded-full hover:bg-white/20 text-white transition-colors cursor-pointer"
+              aria-label="Tutup"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Modal Body */}
@@ -157,46 +177,82 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                         className="w-full h-full object-cover opacity-90"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-                      <div className="absolute top-2 right-2">
-                        <span className="px-2 py-0.5 rounded-full bg-white/25 backdrop-blur-md text-white text-[9px] font-bold">
-                          Banner Galang Donasi
-                        </span>
-                      </div>
                     </div>
                   )}
-                  <div className="p-3 flex items-center gap-3">
-                    <img 
-                      src={campaign.coverImage} 
-                      alt={campaign.title} 
-                      className="w-12 h-12 rounded-xl object-cover shrink-0 border border-white/60 dark:border-slate-700 shadow-xs" 
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] font-bold text-[#060ee3] dark:text-blue-400 uppercase tracking-wide">
-                          {campaign.categoryLabel}
-                        </span>
-                        {campaign.isUrgent && (
-                          <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-bold text-[8px] uppercase">
-                            Mendesak
+                  <div className="p-3">
+                    <div className="flex items-start gap-3">
+                      <img 
+                        src={campaign.coverImage} 
+                        alt={campaign.title} 
+                        className="w-12 h-12 rounded-xl object-cover shrink-0 border border-white/60 dark:border-slate-700 shadow-xs mt-0.5" 
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-[#060ee3] dark:text-blue-400 uppercase tracking-wide">
+                            {campaign.categoryLabel}
                           </span>
-                        )}
+                          {campaign.isUrgent && (
+                            <span className="px-1.5 py-0.5 rounded bg-rose-600 text-white font-bold text-[8px] uppercase">
+                              Mendesak
+                            </span>
+                          )}
+                        </div>
+                        <h4 className="text-xs font-bold text-slate-900 dark:text-white leading-snug">
+                          {campaign.title}
+                        </h4>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                          {campaign.shortDescription || 'Tersalurkan resmi lewat PARAMIS FOUNDATION'}
+                        </p>
+                        <div className="flex items-center justify-between mt-2 pt-1 border-t border-blue-100/60 dark:border-blue-900/40">
+                          <button
+                            type="button"
+                            onClick={() => setShowFullDescInModal(!showFullDescInModal)}
+                            className="text-[10px] font-bold text-[#060ee3] dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                          >
+                            <FileText className="w-3 h-3" />
+                            <span>{showFullDescInModal ? 'Tutup Deskripsi' : 'Baca Cerita & Deskripsi'}</span>
+                            {showFullDescInModal ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setIsShareModalOpen(true)}
+                            className="text-[10px] font-bold text-[#060ee3] dark:text-blue-400 hover:underline flex items-center gap-1 cursor-pointer"
+                            title="Bagikan tautan kampanye donasi ini"
+                          >
+                            <Share2 className="w-3 h-3" />
+                            <span>Bagikan Tautan</span>
+                          </button>
+                        </div>
                       </div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                        {campaign.title}
-                      </h4>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                        Tersalurkan resmi lewat PARAMIS FOUNDATION
-                      </p>
                     </div>
+
+                    {/* Expandable full description */}
+                    {showFullDescInModal && (
+                      <div className="mt-3 pt-3 border-t border-blue-200/60 dark:border-blue-900/60 text-xs text-slate-700 dark:text-slate-300 space-y-2 max-h-48 overflow-y-auto pr-1">
+                        <div className="p-2.5 rounded-xl bg-white/80 dark:bg-slate-900/80 border border-blue-100 dark:border-slate-800 text-[11px] leading-relaxed whitespace-pre-line">
+                          {campaign.fullDescription || campaign.shortDescription}
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-slate-500">
+                          <span>Target: Rp {campaign.targetAmount.toLocaleString('id-ID')}</span>
+                          <span>{campaign.donorCount} Donatur</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
               {/* Nominal selector */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-2">
-                  Pilih Nominal Donasi
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Pilih Nominal Donasi
+                  </label>
+                  <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+                    Bebas Berapapun
+                  </span>
+                </div>
                 <div className="grid grid-cols-3 gap-2">
                   {PRESET_AMOUNTS.map((amt) => {
                     const isSelected = selectedAmount === amt && !customAmount;
@@ -220,7 +276,7 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                   })}
                 </div>
 
-                {/* Custom nominal input */}
+                {/* Custom nominal input (tanpa batas minimum) */}
                 <div className="mt-2.5">
                   <div className="relative">
                     <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-500">
@@ -229,7 +285,8 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                     <input
                       id="input-custom-donation-amount"
                       type="number"
-                      placeholder="Nominal lainnya (min Rp 10.000)"
+                      min="1"
+                      placeholder="Nominal lainnya (bebas berapa rupiahpun, tanpa minimum)"
                       value={customAmount}
                       onChange={(e) => {
                         setCustomAmount(e.target.value);
@@ -237,6 +294,10 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                       className="w-full pl-10 pr-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#060ee3]"
                     />
                   </div>
+                  <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1 font-medium">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                    <span>Bebas berdonasi berapa rupiahpun (tanpa batas minimum nominal).</span>
+                  </p>
                 </div>
               </div>
 
@@ -577,6 +638,19 @@ export const DonationModal: React.FC<DonationModalProps> = ({
                 </div>
               </div>
 
+              {/* Post-Donation Share Button */}
+              {campaign && (
+                <button
+                  type="button"
+                  id="btn-share-post-donation"
+                  onClick={() => setIsShareModalOpen(true)}
+                  className="w-full py-2.5 px-3 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-[#060ee3] dark:text-blue-400 hover:bg-blue-100 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all shadow-xs active:scale-98"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Ajak Kerabat Berdonasi (Bagikan Tautan)</span>
+                </button>
+              )}
+
               {/* Action buttons */}
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -601,6 +675,13 @@ export const DonationModal: React.FC<DonationModalProps> = ({
 
         </div>
       </div>
+
+      {/* MODAL BERBAGI TAUTAN DONASI */}
+      <ShareCampaignModal 
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        campaign={campaign || null}
+      />
     </div>
   );
 };

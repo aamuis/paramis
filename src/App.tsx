@@ -35,6 +35,7 @@ import { ZakatCalculatorModal } from './components/ZakatCalculatorModal';
 import { SocialAidModal } from './components/SocialAidModal';
 import { FundraiserForm } from './components/FundraiserForm';
 import { LegalTermsView } from './components/LegalTermsView';
+import { ShareCampaignModal } from './components/ShareCampaignModal';
 import { 
   Heart, 
   ShieldCheck, 
@@ -53,7 +54,8 @@ import {
   FileText,
   BookOpen,
   GraduationCap,
-  Lock
+  Lock,
+  Share2
 } from 'lucide-react';
 import { ParamisLogo } from './components/ParamisLogo';
 
@@ -82,6 +84,7 @@ export function App() {
   // Modals
   const [selectedCampaignForDonation, setSelectedCampaignForDonation] = useState<DonationCampaign | null>(null);
   const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
+  const [globalShareCampaign, setGlobalShareCampaign] = useState<DonationCampaign | null>(null);
   const [isVolunteerModalOpen, setIsVolunteerModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [isTransparencyModalOpen, setIsTransparencyModalOpen] = useState(false);
@@ -113,6 +116,44 @@ export function App() {
     window.addEventListener('hashchange', checkHash);
     return () => window.removeEventListener('hashchange', checkHash);
   }, []);
+
+  // Deep linking listener for individual donation campaigns (?donasi=campId or #donasi=campId)
+  useEffect(() => {
+    const handleDeepLink = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const paramId = params.get('donasi') || params.get('campaign');
+        let hashId = '';
+        if (window.location.hash.startsWith('#donasi=')) {
+          hashId = window.location.hash.replace('#donasi=', '');
+        } else if (window.location.hash.startsWith('#donasi/')) {
+          hashId = window.location.hash.replace('#donasi/', '');
+        }
+
+        const targetId = paramId || hashId;
+        if (targetId && campaigns.length > 0) {
+          const found = campaigns.find(
+            c => c.id === targetId || c.id.toLowerCase() === targetId.toLowerCase()
+          );
+          if (found) {
+            setSelectedCampaignForDonation(found);
+            setIsDonationModalOpen(true);
+            setActiveTab('donations');
+          }
+        }
+      } catch (err) {
+        console.error('Error handling deep link:', err);
+      }
+    };
+
+    handleDeepLink();
+    window.addEventListener('popstate', handleDeepLink);
+    window.addEventListener('hashchange', handleDeepLink);
+    return () => {
+      window.removeEventListener('popstate', handleDeepLink);
+      window.removeEventListener('hashchange', handleDeepLink);
+    };
+  }, [campaigns]);
 
   // Secret keyboard shortcut for owner: Ctrl+Shift+A or Alt+A
   useEffect(() => {
@@ -202,6 +243,23 @@ export function App() {
   const handleOpenDonateModal = (campaign?: DonationCampaign) => {
     setSelectedCampaignForDonation(campaign || campaigns[0] || null);
     setIsDonationModalOpen(true);
+  };
+
+  const handleCloseDonateModal = () => {
+    setIsDonationModalOpen(false);
+    try {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has('donasi') || url.searchParams.has('campaign')) {
+        url.searchParams.delete('donasi');
+        url.searchParams.delete('campaign');
+        const newRelative = url.pathname + (url.search ? url.search : '') + (window.location.hash.startsWith('#donasi') ? '' : window.location.hash);
+        window.history.replaceState(null, '', newRelative);
+      } else if (window.location.hash.startsWith('#donasi')) {
+        window.history.replaceState(null, '', url.pathname + (url.search ? url.search : ''));
+      }
+    } catch {
+      // Ignore
+    }
   };
 
   const handleSelectServiceCategory = (category: CampaignCategory) => {
@@ -656,12 +714,25 @@ export function App() {
                         </strong>
                       </div>
 
-                      <button
-                        onClick={() => handleOpenDonateModal(camp)}
-                        className="px-3 py-1.5 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white text-xs font-bold shadow-xs cursor-pointer active:scale-95 transition-all"
-                      >
-                        Donasi
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          id={`btn-share-urgent-${camp.id}`}
+                          onClick={() => setGlobalShareCampaign(camp)}
+                          className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition-all cursor-pointer shadow-2xs hover:border-[#060ee3] hover:text-[#060ee3] dark:hover:text-blue-400"
+                          title="Bagikan Tautan Donasi Ini"
+                        >
+                          <Share2 className="w-3.5 h-3.5" />
+                        </button>
+
+                        <button
+                          id={`btn-donate-urgent-${camp.id}`}
+                          onClick={() => handleOpenDonateModal(camp)}
+                          className="px-3 py-1.5 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white text-xs font-bold shadow-xs cursor-pointer active:scale-95 transition-all"
+                        >
+                          Donasi
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -975,9 +1046,17 @@ export function App() {
         {/* 3. MODALS */}
         <DonationModal 
           isOpen={isDonationModalOpen}
-          onClose={() => setIsDonationModalOpen(false)}
+          onClose={handleCloseDonateModal}
           campaign={selectedCampaignForDonation}
           cmsConfig={cmsConfig}
+        />
+
+        {/* Modal Berbagi Tautan Donasi Global */}
+        <ShareCampaignModal 
+          isOpen={!!globalShareCampaign}
+          onClose={() => setGlobalShareCampaign(null)}
+          campaign={globalShareCampaign}
+          onDonateNow={handleOpenDonateModal}
         />
 
         <VolunteerModal 

@@ -18,11 +18,16 @@ import {
   ShieldCheck,
   ChevronDown,
   ChevronUp,
-  Image as ImageIcon
+  Image as ImageIcon,
+  FileText,
+  ChevronRight,
+  Share2
 } from 'lucide-react';
 import { DonationCampaign, CampaignCategory } from '../types';
 import { INDONESIA_PROVINCES, getCitiesByProvince } from '../data/indonesiaRegions';
 import { OFFICIAL_QRIS_CONFIG } from '../utils/qris';
+import { ShareCampaignModal } from './ShareCampaignModal';
+import { getCampaignShareUrl, copyToClipboard } from '../utils/share';
 
 interface CampaignListProps {
   campaigns: DonationCampaign[];
@@ -65,7 +70,19 @@ export const CampaignList: React.FC<CampaignListProps> = ({
   const [sortByNearest, setSortByNearest] = useState(false);
   const [showQuickQris, setShowQuickQris] = useState(true);
   const [copiedNmid, setCopiedNmid] = useState(false);
-  const [previewBannerCampaign, setPreviewBannerCampaign] = useState<DonationCampaign | null>(null);
+  const [selectedCampaignDetail, setSelectedCampaignDetail] = useState<DonationCampaign | null>(null);
+  const [campaignToShare, setCampaignToShare] = useState<DonationCampaign | null>(null);
+  const [copiedShareId, setCopiedShareId] = useState<string | null>(null);
+
+  const handleCopyDirectLink = async (campId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const url = getCampaignShareUrl(campId);
+    const success = await copyToClipboard(url);
+    if (success) {
+      setCopiedShareId(campId);
+      setTimeout(() => setCopiedShareId(null), 2500);
+    }
+  };
 
   const handleCopyNmid = () => {
     navigator.clipboard.writeText(OFFICIAL_QRIS_CONFIG.nmid);
@@ -439,33 +456,32 @@ export const CampaignList: React.FC<CampaignListProps> = ({
                   {/* Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
 
-                  {/* Badges */}
-                  <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5 z-10">
-                    <span className="px-2 py-0.5 rounded-full bg-white/95 dark:bg-slate-900/95 text-[10px] font-bold text-[#060ee3] dark:text-blue-400 shadow-xs uppercase tracking-wide">
-                      {camp.categoryLabel}
-                    </span>
-
-                    {camp.isUrgent && (
-                      <span className="px-2 py-0.5 rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs flex items-center gap-1">
-                        <Flame className="w-3 h-3 fill-white" />
-                        Mendesak
+                  {/* Badges & Share Quick Icon */}
+                  <div className="absolute top-2.5 left-2.5 right-2.5 flex items-center justify-between z-10">
+                    <div className="flex flex-wrap gap-1.5">
+                      <span className="px-2 py-0.5 rounded-full bg-white/95 dark:bg-slate-900/95 text-[10px] font-bold text-[#060ee3] dark:text-blue-400 shadow-xs uppercase tracking-wide">
+                        {camp.categoryLabel}
                       </span>
-                    )}
 
-                    {camp.bannerImage && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setPreviewBannerCampaign(camp);
-                        }}
-                        className="px-2 py-0.5 rounded-full bg-purple-600/90 hover:bg-purple-700 text-[10px] font-bold text-white shadow-xs flex items-center gap-1 cursor-pointer transition-all active:scale-95"
-                        title="Lihat Banner Galang Donasi HD"
-                      >
-                        <ImageIcon className="w-2.5 h-2.5" />
-                        <span>Banner HD</span>
-                      </button>
-                    )}
+                      {camp.isUrgent && (
+                        <span className="px-2 py-0.5 rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-xs flex items-center gap-1">
+                          <Flame className="w-3 h-3 fill-white" />
+                          Mendesak
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCampaignToShare(camp);
+                      }}
+                      className="p-1.5 rounded-full bg-black/55 hover:bg-black/85 backdrop-blur-md text-white transition-all active:scale-95 cursor-pointer shadow-xs hover:text-blue-300"
+                      title="Bagikan Tautan Donasi Ini"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
                   {/* Location & Distance Badge */}
@@ -484,13 +500,31 @@ export const CampaignList: React.FC<CampaignListProps> = ({
                 {/* Card Body */}
                 <div className="p-3.5 flex flex-col flex-1 justify-between gap-3">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug line-clamp-2">
+                    <h3 
+                      onClick={() => setSelectedCampaignDetail(camp)}
+                      className="text-sm font-bold text-slate-900 dark:text-white leading-snug line-clamp-2 hover:text-[#060ee3] dark:hover:text-blue-400 cursor-pointer transition-colors"
+                      title="Klik untuk membaca cerita donasi selengkapnya"
+                    >
                       {camp.title}
                     </h3>
 
-                    <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-2 leading-relaxed">
+                    <p 
+                      onClick={() => setSelectedCampaignDetail(camp)}
+                      className="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-2 leading-relaxed cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
+                      title="Klik untuk membaca cerita donasi selengkapnya"
+                    >
                       {camp.shortDescription}
                     </p>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCampaignDetail(camp)}
+                      className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-bold text-[#060ee3] dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline cursor-pointer group/link"
+                    >
+                      <FileText className="w-3 h-3" />
+                      <span>Baca Lebih Lanjut</span>
+                      <ChevronRight className="w-3 h-3 group-hover/link:translate-x-0.5 transition-transform" />
+                    </button>
                   </div>
 
                   {/* Progress bar and metrics */}
@@ -532,15 +566,28 @@ export const CampaignList: React.FC<CampaignListProps> = ({
                     </div>
                   </div>
 
-                  {/* Card Action Button */}
-                  <button
-                    id={`btn-donate-card-${camp.id}`}
-                    onClick={() => onSelectCampaignForDonation(camp)}
-                    className="w-full py-2.5 px-3 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white text-xs font-bold shadow-xs active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-1.5"
-                  >
-                    <Heart className="w-3.5 h-3.5 fill-white" />
-                    <span>Donasi Sekarang</span>
-                  </button>
+                  {/* Card Action Buttons */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      id={`btn-donate-card-${camp.id}`}
+                      onClick={() => onSelectCampaignForDonation(camp)}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-[#060ee3] hover:bg-[#050cc0] text-white text-xs font-bold shadow-xs active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                    >
+                      <Heart className="w-3.5 h-3.5 fill-white" />
+                      <span>Donasi</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      id={`btn-share-card-${camp.id}`}
+                      onClick={() => setCampaignToShare(camp)}
+                      className="px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all active:scale-98 shadow-2xs hover:border-[#060ee3] dark:hover:border-blue-400"
+                      title="Bagikan Tautan Donasi Ini"
+                    >
+                      <Share2 className="w-3.5 h-3.5 text-[#060ee3] dark:text-blue-400" />
+                      <span>Bagikan</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -548,84 +595,225 @@ export const CampaignList: React.FC<CampaignListProps> = ({
         )}
       </div>
       
-      {/* BANNER GALANG DONASI PREVIEW MODAL */}
-      {previewBannerCampaign && (
+      {/* DETAIL & DESKRIPSI LENGKAP GALANG DONASI MODAL */}
+      {selectedCampaignDetail && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
-          onClick={() => setPreviewBannerCampaign(null)}
+          onClick={() => setSelectedCampaignDetail(null)}
         >
           <div 
-            className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800"
+            className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-800 max-h-[90vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between p-4 border-b border-slate-100 dark:border-slate-800 shrink-0">
               <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-xl bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300">
-                  <ImageIcon className="w-4 h-4" />
+                <span className="p-1.5 rounded-xl bg-blue-100 dark:bg-blue-950 text-[#060ee3] dark:text-blue-400">
+                  <FileText className="w-4 h-4" />
                 </span>
                 <div>
                   <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                    Banner Galang Donasi HD
+                    Detail & Kisah Galang Donasi
                   </h4>
                   <p className="text-[10px] text-slate-500">
-                    {previewBannerCampaign.title}
+                    {selectedCampaignDetail.categoryLabel} • Terverifikasi Resmi
                   </p>
                 </div>
               </div>
               <button
                 type="button"
-                onClick={() => setPreviewBannerCampaign(null)}
+                onClick={() => setSelectedCampaignDetail(null)}
                 className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Banner Full Image */}
-            <div className="relative aspect-video w-full bg-slate-950 overflow-hidden">
-              <img
-                src={previewBannerCampaign.bannerImage || previewBannerCampaign.coverImage}
-                alt="Banner Donasi"
-                className="w-full h-full object-contain"
-              />
+            {/* Modal Scrollable Body */}
+            <div className="overflow-y-auto p-4 sm:p-5 space-y-4">
+              {/* Panorama Image (No "Banner HD" text) */}
+              <div className="relative rounded-2xl overflow-hidden aspect-video max-h-60 w-full bg-slate-950 border border-slate-200 dark:border-slate-800">
+                <img
+                  src={selectedCampaignDetail.bannerImage || selectedCampaignDetail.coverImage}
+                  alt={selectedCampaignDetail.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white text-xs">
+                  <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-[10px] font-bold">
+                    {selectedCampaignDetail.categoryLabel}
+                  </span>
+                  <div className="flex items-center gap-1 text-[11px] font-medium bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full">
+                    <MapPin className="w-3.5 h-3.5 text-blue-300" />
+                    <span>{selectedCampaignDetail.location.city}, {selectedCampaignDetail.location.province}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Title & Metadata */}
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
+                  {selectedCampaignDetail.title}
+                </h3>
+                <div className="flex flex-wrap items-center gap-2 mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Disalurkan Resmi oleh PARAMIS FOUNDATION</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress and Target Bar */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
+                <div className="flex justify-between items-baseline text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-500 block">Dana Terkumpul</span>
+                    <span className="font-bold text-[#060ee3] dark:text-blue-400 text-sm">
+                      Rp {selectedCampaignDetail.collectedAmount.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-500 block">Target Kebutuhan</span>
+                    <span className="font-bold text-slate-700 dark:text-slate-200 text-sm">
+                      Rp {selectedCampaignDetail.targetAmount.toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="w-full bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
+                  <div
+                    className="bg-[#060ee3] h-full rounded-full transition-all duration-700"
+                    style={{ 
+                      width: `${Math.min(100, Math.round((selectedCampaignDetail.collectedAmount / selectedCampaignDetail.targetAmount) * 100))}%` 
+                    }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 pt-1">
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <Users className="w-3.5 h-3.5 text-slate-400" />
+                    <span>{selectedCampaignDetail.donorCount} Orang Donatur</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-medium">
+                    <Clock className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Sisa {selectedCampaignDetail.daysLeft} hari lagi</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Full Description & Story */}
+              <div className="space-y-2 pt-1">
+                <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-[#060ee3] dark:text-blue-400" />
+                  <span>Kisah & Penjelasan Donasi</span>
+                </h4>
+                <div className="p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm text-slate-700 dark:text-slate-200 leading-relaxed whitespace-pre-line font-normal space-y-2.5 shadow-xs">
+                  {selectedCampaignDetail.fullDescription || selectedCampaignDetail.shortDescription}
+                </div>
+              </div>
+
+              {/* Share Tautan Donasi Box */}
+              <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#060ee3] dark:text-blue-400">
+                    <Share2 className="w-3.5 h-3.5" />
+                    <span>Tautan Unik Donasi Ini:</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500">Bisa dibagikan ke WhatsApp & Medsos</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={getCampaignShareUrl(selectedCampaignDetail.id)}
+                    className="flex-1 px-2.5 py-1.5 text-xs font-mono rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 truncate select-all"
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => handleCopyDirectLink(selectedCampaignDetail.id, e)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer transition-all shrink-0 ${
+                      copiedShareId === selectedCampaignDetail.id
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-[#060ee3] hover:bg-blue-700 text-white'
+                    }`}
+                  >
+                    {copiedShareId === selectedCampaignDetail.id ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Tersalin</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Salin</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCampaignToShare(selectedCampaignDetail)}
+                    className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center gap-1 cursor-pointer shadow-2xs shrink-0"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-[#060ee3] dark:text-blue-400" />
+                    <span className="hidden sm:inline">Pilihan Berbagi</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* No Minimum Guarantee Banner */}
+              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center gap-2.5 text-xs text-emerald-800 dark:text-emerald-200">
+                <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span>
+                  <strong>Bebas berdonasi berapa rupiahpun:</strong> Tidak ada batasan nominal minimum. Setiap rupiah yang Anda titipkan sangat berarti bagi saudara kita yang membutuhkan.
+                </span>
+              </div>
             </div>
 
             {/* Modal Footer / Actions */}
-            <div className="p-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 dark:bg-slate-900/60">
-              <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
-                <span className="font-bold text-[#060ee3] dark:text-blue-400">
-                  Target: Rp {previewBannerCampaign.targetAmount.toLocaleString('id-ID')}
-                </span>
-                <span>•</span>
-                <span>{previewBannerCampaign.donorCount} Donatur</span>
-              </div>
-
+            <div className="p-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50 dark:bg-slate-900/80 border-t border-slate-100 dark:border-slate-800 shrink-0">
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <button
                   type="button"
-                  onClick={() => setPreviewBannerCampaign(null)}
-                  className="flex-1 sm:flex-none px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer"
+                  onClick={() => setSelectedCampaignDetail(null)}
+                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer"
                 >
                   Tutup
                 </button>
+
                 <button
                   type="button"
-                  onClick={() => {
-                    const c = previewBannerCampaign;
-                    setPreviewBannerCampaign(null);
-                    onSelectCampaignForDonation(c);
-                  }}
-                  className="flex-1 sm:flex-none px-5 py-2 rounded-xl bg-[#060ee3] hover:bg-blue-700 text-white text-xs font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                  onClick={() => setCampaignToShare(selectedCampaignDetail)}
+                  className="flex-1 sm:flex-none px-4 py-2.5 rounded-xl border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950 text-[#060ee3] dark:text-blue-400 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <Heart className="w-3.5 h-3.5 fill-white" />
-                  <span>Donasi Sekarang</span>
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>Bagikan Tautan</span>
                 </button>
               </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const c = selectedCampaignDetail;
+                  setSelectedCampaignDetail(null);
+                  onSelectCampaignForDonation(c);
+                }}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[#060ee3] hover:bg-blue-700 text-white text-xs font-bold shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+              >
+                <Heart className="w-4 h-4 fill-white" />
+                <span>Donasi Sekarang (Bebas Berapa Rupiahpun)</span>
+              </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* MODAL BERBAGI TAUTAN DONASI */}
+      <ShareCampaignModal 
+        isOpen={!!campaignToShare}
+        onClose={() => setCampaignToShare(null)}
+        campaign={campaignToShare}
+        onDonateNow={onSelectCampaignForDonation}
+      />
     </section>
   );
 };
